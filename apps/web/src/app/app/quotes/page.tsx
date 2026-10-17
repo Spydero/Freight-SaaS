@@ -65,7 +65,14 @@ export default function QuotesPage() {
 
   return (
     <div>
-      <PageHeader title="Quotes" description="Review, accept, or reject priced offers." />
+      <PageHeader
+        title="Quotes"
+        description={
+          user?.role === "CLIENT"
+            ? "Review offers from Ternline. Accepting a quote is what creates your shipment."
+            : "Prepare and send quotations. A shipment is created only after the approved client accepts."
+        }
+      />
       {message ? <p className="mb-4 text-sm text-[var(--gold-soft)]">{message}</p> : null}
       <div className="space-y-3">
         {quotes.map((q) => (

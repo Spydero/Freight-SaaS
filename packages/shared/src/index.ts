@@ -149,22 +149,6 @@ export const updateShipmentSchema = z.object({
   eta: z.string().optional().nullable(),
 });
 
-/** Ops/Admin can book a shipment directly (without quote accept). */
-export const createShipmentSchema = z.object({
-  organizationId: z.string().min(1),
-  mode: FreightMode.default("OCEAN"),
-  originLabel: z.string().min(1).max(200),
-  destinationLabel: z.string().min(1).max(200),
-  commodity: z.string().max(200).optional(),
-  weightKg: z.number().optional(),
-  packageCount: z.number().int().optional(),
-  containerCount: z.number().int().optional(),
-  etd: z.string().optional(),
-  eta: z.string().optional(),
-  assigneeId: z.string().optional(),
-  notes: z.string().max(2000).optional(),
-});
-
 export const KANBAN_COLUMNS: ShipmentStatus[] = [
   "BOOKED",
   "IN_TRANSIT",

@@ -38,7 +38,6 @@ export default function ShipmentsPage() {
   const [shipments, setShipments] = useState<Shipment[]>([]);
   const [status, setStatus] = useState("");
   const [q, setQ] = useState("");
-  const canCreate = user?.role === "OPS" || user?.role === "ADMIN";
 
   async function load() {
     const params = new URLSearchParams();
@@ -56,23 +55,17 @@ export default function ShipmentsPage() {
     <div>
       <PageHeader
         title="Shipments"
-        description="Filter, search, and open timelines. Clients also get shipments when they accept a quote."
+        description={
+          user?.role === "CLIENT"
+            ? "Your bookings appear here after you accept a quotation."
+            : "Shipments are created only when an approved client accepts a quotation — not assigned directly by Ops."
+        }
         actions={
           <Button variant="secondary" onClick={() => void downloadCsv()}>
             Export CSV
           </Button>
         }
       />
-      {canCreate ? (
-        <div className="mb-4">
-          <Link
-            href="/app/shipments/new"
-            className="inline-flex items-center justify-center rounded-md bg-[var(--gold)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] hover:brightness-110"
-          >
-            + Create shipment
-          </Link>
-        </div>
-      ) : null}
       <div className="mb-4 flex flex-wrap gap-3">
         <Input
           placeholder="Search reference, route, commodity…"

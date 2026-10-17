@@ -94,10 +94,12 @@ Creating a quote (Ops) and accepting a quote (Client) are **different roles** �
 
 ## How to create & test shipments
 
+Shipments are **not** assigned by Ops. They are created only when an **approved client accepts a quotation**.
+
 1. Open http://localhost:3000 — submit **Plan your next shipment** (or `/contact`).
 2. Log in as **ops@ternline.demo** / `demo1234` → **Leads** → select lead → **Send quote** (pick Acme Trading).
-3. Log out → log in as **client@ternline.demo** / `demo1234` → **Quotes** → **Accept**.
-4. That creates a **Shipment**. Open it under **Shipments** or **Kanban**.
+3. Log out → log in as **client@ternline.demo** / `demo1234` → **Quotes** → **Accept** (company must be approved).
+4. That creates the **Shipment**. Open it under **Shipments** or **Kanban**.
 5. As Ops again: add milestones, generate public `/track/...` link.
 
-**Already seeded:** log in as client or ops and open **Shipments** — `TRN-2026-00001` (in transit) and `TRN-2026-00002` (booked) are ready.
+**Already seeded:** log in as client or ops and open **Shipments** — sample bookings exist for browsing.

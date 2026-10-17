@@ -9,13 +9,13 @@ import { Button, Input, Label } from "@/components/ui";
 const demos = [
   {
     email: "ops@ternline.demo",
-    label: "Ops (quotes + create shipments)",
-    hint: "Ternline staff — leads, quotes, create shipments, kanban",
+    label: "Ops (send quotations)",
+    hint: "Ternline staff — leads, send quotes, milestones, kanban",
   },
   {
     email: "client@ternline.demo",
     label: "Client (accept quotes)",
-    hint: "Acme Trading customer — accept quotes, view shipments",
+    hint: "Approved customer — accept/reject quotes to create shipments",
   },
   {
     email: "admin@ternline.demo",
