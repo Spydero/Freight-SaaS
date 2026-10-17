@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import Link from "next/link";
 import { api, API_URL } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { useLiveReload } from "@/lib/use-live-reload";
 import { Badge, Button, Card, Input, PageHeader, Select, statusTone } from "@/components/ui";
 import { formatDate } from "@/lib/utils";
 
@@ -38,18 +39,18 @@ export default function ShipmentsPage() {
   const [shipments, setShipments] = useState<Shipment[]>([]);
   const [status, setStatus] = useState("");
   const [q, setQ] = useState("");
+  const [syncedAt, setSyncedAt] = useState<Date | null>(null);
 
-  async function load() {
+  const load = useCallback(async () => {
     const params = new URLSearchParams();
     if (status) params.set("status", status);
     if (q) params.set("q", q);
     const data = await api<{ shipments: Shipment[] }>(`/v1/shipments?${params}`);
     setShipments(data.shipments);
-  }
+    setSyncedAt(new Date());
+  }, [status, q]);
 
-  useEffect(() => {
-    load().catch(console.error);
-  }, [status]);
+  useLiveReload(load, [load], 3000);
 
   return (
     <div>
@@ -57,15 +58,23 @@ export default function ShipmentsPage() {
         title="Shipments"
         description={
           user?.role === "CLIENT"
-            ? "Your bookings appear here after you accept a quotation."
-            : "Shipments are created only when an approved client accepts a quotation — not assigned directly by Ops."
+            ? "Your company's shipments."
+            : "All client shipments. Created when a client accepts a quotation."
         }
         actions={
-          <Button variant="secondary" onClick={() => void downloadCsv()}>
-            Export CSV
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="secondary" onClick={() => void load()}>
+              Refresh
+            </Button>
+            <Button variant="secondary" onClick={() => void downloadCsv()}>
+              Export CSV
+            </Button>
+          </div>
         }
       />
+      {user?.role === "CLIENT" && syncedAt ? (
+        <p className="mb-3 text-xs text-white/40">Last sync {syncedAt.toLocaleTimeString()}</p>
+      ) : null}
       <div className="mb-4 flex flex-wrap gap-3">
         <Input
           placeholder="Search reference, route, commodity…"
@@ -73,7 +82,7 @@ export default function ShipmentsPage() {
           onChange={(e) => setQ(e.target.value)}
           className="max-w-sm"
         />
-        <Button variant="secondary" onClick={() => load()}>
+        <Button variant="secondary" onClick={() => void load()}>
           Search
         </Button>
         <Select value={status} onChange={(e) => setStatus(e.target.value)} className="max-w-xs">
@@ -92,7 +101,7 @@ export default function ShipmentsPage() {
           <thead className="bg-white/5 text-white/50">
             <tr>
               <th className="px-4 py-3">Reference</th>
-              <th className="px-4 py-3">Org</th>
+              {user?.role !== "CLIENT" ? <th className="px-4 py-3">Client</th> : null}
               <th className="px-4 py-3">Route</th>
               <th className="px-4 py-3">Mode</th>
               <th className="px-4 py-3">Status</th>
@@ -107,7 +116,9 @@ export default function ShipmentsPage() {
                     {s.referenceCode}
                   </Link>
                 </td>
-                <td className="px-4 py-3 text-white/65">{s.organization.name}</td>
+                {user?.role !== "CLIENT" ? (
+                  <td className="px-4 py-3 text-white/65">{s.organization.name}</td>
+                ) : null}
                 <td className="px-4 py-3 text-white/70">
                   {s.originLabel} → {s.destinationLabel}
                 </td>

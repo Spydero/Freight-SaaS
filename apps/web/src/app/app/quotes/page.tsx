@@ -94,7 +94,8 @@ export default function QuotesPage() {
                   <Badge tone={statusTone(q.status)}>{q.status.replaceAll("_", " ")}</Badge>
                 </div>
                 <p className="mt-1 text-sm text-white/55">
-                  {q.organization.name} · {q.originLabel ?? "Origin"} → {q.destinationLabel ?? "Destination"}
+                  {user?.role !== "CLIENT" ? `${q.organization.name} · ` : ""}
+                  {q.originLabel ?? "Origin"} → {q.destinationLabel ?? "Destination"}
                 </p>
                 <p className="mt-2 text-lg text-[var(--gold-soft)]">
                   {formatMoney(Number(q.total), q.currency)}

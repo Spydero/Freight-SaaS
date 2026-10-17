@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { api } from "@/lib/api";
 import { Badge, statusTone } from "@/components/ui";
+import { ShipmentStatusTrack } from "@/components/shipment-status-track";
 import { formatDate } from "@/lib/utils";
 
 type TrackPayload = {
@@ -62,11 +63,10 @@ export default function TrackPage() {
               <p className="mt-2 text-sm text-white/50">
                 {data.mode} · ETD {formatDate(data.etd)} · ETA {formatDate(data.eta)}
               </p>
-              {data.holdReason ? (
-                <p className="mt-3 text-sm text-amber-300">On hold: {data.holdReason}</p>
-              ) : null}
             </div>
+            <ShipmentStatusTrack status={data.status} holdReason={data.holdReason} />
             <div className="space-y-4">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-white/50">Timeline</h2>
               {data.events.map((event) => (
                 <div key={event.id} className="border-l-2 border-[var(--gold)]/60 pl-4">
                   <div className="text-sm text-white/45">{formatDate(event.occurredAt)}</div>

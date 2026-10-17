@@ -2,21 +2,17 @@ import { Router } from "express";
 import { createQuoteSchema } from "@elios/shared";
 import { prisma } from "../lib/prisma.js";
 import { requireAuth, requireRoles } from "../middleware/auth.js";
-import { badRequest, forbidden, notFound } from "../lib/errors.js";
+import { badRequest, notFound } from "../lib/errors.js";
 import { logActivity, notifyUser } from "../lib/activity.js";
-import { assertClientOrgApproved } from "../lib/org-access.js";
+import { assertClientOrgApproved, assertOrgAccess, orgScopeWhere } from "../lib/org-access.js";
 import { createTrackingToken, makeReferenceCode } from "../lib/tokens.js";
 
 export const quotesRouter = Router();
 
 quotesRouter.get("/", requireAuth, async (req, res, next) => {
   try {
-    const where =
-      req.user!.role === "CLIENT"
-        ? { organizationId: req.user!.organizationId }
-        : {};
     const quotes = await prisma.quote.findMany({
-      where,
+      where: orgScopeWhere(req.user),
       orderBy: { createdAt: "desc" },
       include: {
         lineItems: true,
@@ -44,9 +40,7 @@ quotesRouter.get("/:id", requireAuth, async (req, res, next) => {
       },
     });
     if (!quote) throw notFound("Quote not found");
-    if (req.user!.role === "CLIENT" && quote.organizationId !== req.user!.organizationId) {
-      throw forbidden();
-    }
+    assertOrgAccess(req.user!, quote.organizationId);
     res.json({ quote });
   } catch (err) {
     next(err);
@@ -128,9 +122,7 @@ quotesRouter.post("/:id/accept", requireAuth, requireRoles("CLIENT", "ADMIN"), a
       include: { shipment: true, organization: true },
     });
     if (!quote) throw notFound("Quote not found");
-    if (req.user!.role === "CLIENT" && quote.organizationId !== req.user!.organizationId) {
-      throw forbidden();
-    }
+    assertOrgAccess(req.user!, quote.organizationId);
     if (req.user!.role === "CLIENT") {
       await assertClientOrgApproved(quote.organizationId);
     }
@@ -204,9 +196,7 @@ quotesRouter.post("/:id/reject", requireAuth, requireRoles("CLIENT", "ADMIN"), a
   try {
     const quote = await prisma.quote.findUnique({ where: { id: req.params.id } });
     if (!quote) throw notFound("Quote not found");
-    if (req.user!.role === "CLIENT" && quote.organizationId !== req.user!.organizationId) {
-      throw forbidden();
-    }
+    assertOrgAccess(req.user!, quote.organizationId);
     if (req.user!.role === "CLIENT") {
       await assertClientOrgApproved(quote.organizationId);
     }
@@ -224,7 +214,7 @@ quotesRouter.post("/:id/request-revision", requireAuth, requireRoles("CLIENT"), 
   try {
     const quote = await prisma.quote.findUnique({ where: { id: req.params.id } });
     if (!quote) throw notFound("Quote not found");
-    if (quote.organizationId !== req.user!.organizationId) throw forbidden();
+    assertOrgAccess(req.user!, quote.organizationId);
     await assertClientOrgApproved(quote.organizationId);
     const updated = await prisma.quote.update({
       where: { id: quote.id },
@@ -244,9 +234,7 @@ quotesRouter.get("/:id/pdf-data", requireAuth, async (req, res, next) => {
       include: { lineItems: true, organization: true, createdBy: true },
     });
     if (!quote) throw notFound("Quote not found");
-    if (req.user!.role === "CLIENT" && quote.organizationId !== req.user!.organizationId) {
-      throw forbidden();
-    }
+    assertOrgAccess(req.user!, quote.organizationId);
     res.json({
       pdf: {
         title: `Ternline Quote ${quote.id.slice(-6).toUpperCase()}`,

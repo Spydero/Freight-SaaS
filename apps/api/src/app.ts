@@ -20,16 +20,35 @@ import { adminUsersRouter } from "./modules/admin-users.js";
 
 export function createApp() {
   const app = express();
+  // Avoid 304/ETag reuse of stale shipment JSON across Ops→Client checks
+  app.set("etag", false);
 
+  const allowedOrigins = new Set(
+    [
+      env.WEB_ORIGIN,
+      "http://localhost:3000",
+      "http://127.0.0.1:3000",
+      "http://localhost:3001",
+      "http://127.0.0.1:3001",
+    ].filter(Boolean),
+  );
   app.use(
     cors({
-      origin: env.WEB_ORIGIN,
+      origin(origin, cb) {
+        // Allow non-browser tools (no Origin) and local web origins
+        if (!origin || allowedOrigins.has(origin)) return cb(null, true);
+        return cb(null, false);
+      },
       credentials: true,
     }),
   );
   app.use(express.json({ limit: "2mb" }));
   app.use(cookieParser());
   app.use(morgan(env.NODE_ENV === "production" ? "combined" : "dev"));
+  app.use((_req, res, next) => {
+    res.setHeader("Cache-Control", "no-store");
+    next();
+  });
   app.use(optionalAuth);
 
   app.get("/health", (_req, res) => res.json({ ok: true, service: "ternline-api" }));

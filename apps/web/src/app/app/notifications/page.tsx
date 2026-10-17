@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
+import Link from "next/link";
 import { api } from "@/lib/api";
+import { useLiveReload } from "@/lib/use-live-reload";
 import { Button, Card, PageHeader } from "@/components/ui";
 import { formatDate } from "@/lib/utils";
 
@@ -16,14 +18,12 @@ type Notification = {
 export default function NotificationsPage() {
   const [items, setItems] = useState<Notification[]>([]);
 
-  async function load() {
+  const load = useCallback(async () => {
     const data = await api<{ notifications: Notification[] }>("/v1/notifications");
     setItems(data.notifications);
-  }
-
-  useEffect(() => {
-    load().catch(console.error);
   }, []);
+
+  useLiveReload(load, [load]);
 
   async function markRead(id: string) {
     await api(`/v1/notifications/${id}/read`, { method: "POST" });

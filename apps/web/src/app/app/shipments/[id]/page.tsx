@@ -1,12 +1,24 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useCallback, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import { Badge, Button, Card, Input, Label, PageHeader, Select, Textarea, statusTone } from "@/components/ui";
+import { useLiveReload } from "@/lib/use-live-reload";
+import { Badge, Button, Card, Input, Label, PageHeader, Select, Textarea } from "@/components/ui";
+import { ShipmentStatusTrack } from "@/components/shipment-status-track";
 import { formatDate } from "@/lib/utils";
+
+const STATUS_OPTIONS = [
+  "BOOKED",
+  "IN_TRANSIT",
+  "AT_CUSTOMS",
+  "OUT_FOR_DELIVERY",
+  "DELIVERED",
+  "ON_HOLD",
+  "CANCELLED",
+] as const;
 
 export default function ShipmentDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -14,54 +26,135 @@ export default function ShipmentDetailPage() {
   const [shipment, setShipment] = useState<any>(null);
   const [trackUrl, setTrackUrl] = useState("");
   const [msg, setMsg] = useState("");
+  const [error, setError] = useState("");
+  const [nextStatus, setNextStatus] = useState("");
+  const [statusDirty, setStatusDirty] = useState(false);
+  const [statusBusy, setStatusBusy] = useState(false);
+  const [syncedAt, setSyncedAt] = useState<Date | null>(null);
 
-  async function load() {
+  const load = useCallback(async () => {
     const data = await api<{ shipment: any }>(`/v1/shipments/${id}`);
     setShipment(data.shipment);
-  }
+    setSyncedAt(new Date());
+    if (!statusBusy && !statusDirty) {
+      setNextStatus(data.shipment.status);
+    }
+  }, [id, statusBusy, statusDirty]);
 
-  useEffect(() => {
-    load().catch(console.error);
-  }, [id]);
+  useLiveReload(load, [load], 3000);
+
+  async function updateStatus(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError("");
+    setMsg("");
+    if (!nextStatus || nextStatus === shipment?.status) {
+      setError("Pick a different status to update.");
+      return;
+    }
+    setStatusBusy(true);
+    try {
+      await api(`/v1/shipments/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          status: nextStatus,
+          ...(nextStatus !== "ON_HOLD" ? { holdReason: null } : {}),
+        }),
+      });
+      setStatusDirty(false);
+      setMsg(`Status updated → ${nextStatus.replaceAll("_", " ")}`);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update status");
+    } finally {
+      setStatusBusy(false);
+    }
+  }
 
   async function addEvent(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const form = new FormData(e.currentTarget);
-    await api(`/v1/shipments/${id}/events`, {
-      method: "POST",
-      body: JSON.stringify({
-        title: form.get("title"),
-        description: form.get("description") || undefined,
-        location: form.get("location") || undefined,
-        status: form.get("status") || undefined,
-      }),
-    });
-    e.currentTarget.reset();
-    await load();
+    setError("");
+    setMsg("");
+    const formEl = e.currentTarget;
+    const form = new FormData(formEl);
+    const statusRaw = String(form.get("status") || "");
+    const title = String(form.get("title") || "").trim();
+    if (!title && !statusRaw) {
+      setError("Add a milestone title, or set a status.");
+      return;
+    }
+    try {
+      await api(`/v1/shipments/${id}/events`, {
+        method: "POST",
+        body: JSON.stringify({
+          title: title || `Status → ${statusRaw.replaceAll("_", " ")}`,
+          description: form.get("description") || undefined,
+          location: form.get("location") || undefined,
+          status: statusRaw || undefined,
+        }),
+      });
+      formEl.reset();
+      setMsg(statusRaw ? `Milestone added · status → ${statusRaw.replaceAll("_", " ")}` : "Milestone added");
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to add milestone");
+    }
   }
 
   async function addComment(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const form = new FormData(e.currentTarget);
-    await api(`/v1/shipments/${id}/comments`, {
-      method: "POST",
-      body: JSON.stringify({ body: form.get("body") }),
-    });
-    e.currentTarget.reset();
-    await load();
+    setError("");
+    const formEl = e.currentTarget;
+    const form = new FormData(formEl);
+    try {
+      await api(`/v1/shipments/${id}/comments`, {
+        method: "POST",
+        body: JSON.stringify({ body: form.get("body") }),
+      });
+      formEl.reset();
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to post comment");
+    }
   }
 
   async function setHold(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const form = new FormData(e.currentTarget);
-    await api(`/v1/shipments/${id}`, {
-      method: "PATCH",
-      body: JSON.stringify({
-        status: "ON_HOLD",
-        holdReason: form.get("holdReason"),
-      }),
-    });
-    await load();
+    setError("");
+    setMsg("");
+    const formEl = e.currentTarget;
+    const form = new FormData(formEl);
+    try {
+      await api(`/v1/shipments/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          status: "ON_HOLD",
+          holdReason: form.get("holdReason"),
+        }),
+      });
+      formEl.reset();
+      setMsg("Shipment set to ON HOLD — client notified.");
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update status");
+    }
+  }
+
+  async function clearHold() {
+    setError("");
+    setMsg("");
+    try {
+      await api(`/v1/shipments/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          status: "IN_TRANSIT",
+          holdReason: null,
+        }),
+      });
+      setMsg("Hold cleared · status → IN TRANSIT");
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to clear hold");
+    }
   }
 
   async function makeTrackingLink() {
@@ -75,6 +168,7 @@ export default function ShipmentDetailPage() {
   if (!shipment) return <p className="text-white/50">Loading…</p>;
 
   const isOps = user?.role === "OPS" || user?.role === "ADMIN";
+  const isClient = user?.role === "CLIENT";
 
   return (
     <div>
@@ -88,10 +182,61 @@ export default function ShipmentDetailPage() {
         }
       />
 
+      {error ? <p className="mb-4 text-sm text-red-300">{error}</p> : null}
+      {msg ? <p className="mb-4 text-sm text-[var(--gold-soft)]">{msg}</p> : null}
+
+      {isClient && syncedAt ? (
+        <p className="mb-3 text-xs text-white/40">
+          Last sync {syncedAt.toLocaleTimeString()} ·{" "}
+          <button type="button" className="text-[var(--gold)] underline" onClick={() => void load()}>
+            Refresh
+          </button>
+        </p>
+      ) : null}
+
+      <div className="mb-6">
+        <ShipmentStatusTrack status={shipment.status} holdReason={shipment.holdReason} />
+      </div>
+
+      {isOps ? (
+        <Card className="mb-6 p-5">
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <h2 className="font-semibold">Update status</h2>
+            {shipment.organization?.name ? (
+              <Badge tone="gold">{shipment.organization.name}</Badge>
+            ) : null}
+          </div>
+          <form onSubmit={updateStatus} className="mt-1 flex flex-wrap items-end gap-3">
+            <div className="min-w-[220px] flex-1">
+              <Label htmlFor="nextStatus">New status</Label>
+              <Select
+                id="nextStatus"
+                value={nextStatus}
+                onChange={(e) => {
+                  setNextStatus(e.target.value);
+                  setStatusDirty(true);
+                }}
+              >
+                {STATUS_OPTIONS.map((s) => (
+                  <option key={s} value={s}>
+                    {s.replaceAll("_", " ")}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <Button type="submit" disabled={statusBusy || nextStatus === shipment.status}>
+              {statusBusy ? "Saving…" : "Save status"}
+            </Button>
+          </form>
+        </Card>
+      ) : null}
+
       <div className="mb-6 flex flex-wrap gap-2">
-        <Badge tone={statusTone(shipment.status)}>{shipment.status.replaceAll("_", " ")}</Badge>
         <Badge>{shipment.mode}</Badge>
         {shipment.assignee ? <Badge tone="gold">Owner: {shipment.assignee.name}</Badge> : null}
+        {isOps && shipment.organization?.name ? (
+          <Badge>{shipment.organization.name}</Badge>
+        ) : null}
       </div>
 
       <div className="grid gap-6 xl:grid-cols-3">
@@ -124,13 +269,11 @@ export default function ShipmentDetailPage() {
                 <dd>{formatDate(shipment.eta)}</dd>
               </div>
             </dl>
-            {shipment.holdReason ? (
-              <p className="mt-4 text-sm text-amber-300">Hold reason: {shipment.holdReason}</p>
-            ) : null}
           </Card>
 
           <Card className="p-5">
             <h2 className="font-semibold">Timeline</h2>
+            <p className="mt-1 text-xs text-white/45">Milestone history for this shipment.</p>
             <div className="mt-4 space-y-4">
               {shipment.events.map((event: any) => (
                 <div key={event.id} className="border-l-2 border-[var(--gold)]/50 pl-4">
@@ -140,18 +283,21 @@ export default function ShipmentDetailPage() {
                   {event.description ? <p className="text-sm text-white/65">{event.description}</p> : null}
                 </div>
               ))}
+              {!shipment.events.length ? (
+                <p className="text-sm text-white/40">No milestones yet.</p>
+              ) : null}
             </div>
             {isOps ? (
               <form onSubmit={addEvent} className="mt-6 space-y-3 border-t border-white/10 pt-4">
-                <Label>Add milestone</Label>
-                <Input name="title" placeholder="Vessel arrived Rotterdam" required />
+                <Label>Add milestone (optional status change)</Label>
+                <Input name="title" placeholder="Cleared customs in Rotterdam" />
                 <Input name="location" placeholder="Location" />
                 <Textarea name="description" rows={2} placeholder="Notes" />
                 <Select name="status" defaultValue="">
-                  <option value="">Keep current status</option>
-                  {["BOOKED", "IN_TRANSIT", "AT_CUSTOMS", "OUT_FOR_DELIVERY", "DELIVERED", "ON_HOLD"].map((s) => (
+                  <option value="">Keep current status ({shipment.status})</option>
+                  {STATUS_OPTIONS.filter((s) => s !== "CANCELLED").map((s) => (
                     <option key={s} value={s}>
-                      Set status: {s}
+                      Also set status: {s.replaceAll("_", " ")}
                     </option>
                   ))}
                 </Select>
@@ -209,16 +355,26 @@ export default function ShipmentDetailPage() {
                     </Link>
                   </p>
                 ) : null}
-                {msg ? <p className="mt-2 text-xs text-white/50">{msg}</p> : null}
               </Card>
               <Card className="p-5">
-                <h2 className="font-semibold">Put on hold</h2>
-                <form onSubmit={setHold} className="mt-3 space-y-2">
-                  <Input name="holdReason" required placeholder="Customs exam / weather delay…" />
-                  <Button type="submit" variant="danger">
-                    Set ON HOLD
-                  </Button>
-                </form>
+                <h2 className="font-semibold">Hold controls</h2>
+                {shipment.status === "ON_HOLD" ? (
+                  <div className="mt-3 space-y-2">
+                    <p className="text-sm text-amber-200">
+                      Currently on hold{shipment.holdReason ? `: ${shipment.holdReason}` : ""}
+                    </p>
+                    <Button type="button" variant="secondary" onClick={() => void clearHold()}>
+                      Resume (IN TRANSIT)
+                    </Button>
+                  </div>
+                ) : (
+                  <form onSubmit={setHold} className="mt-3 space-y-2">
+                    <Input name="holdReason" required placeholder="Customs exam / weather delay…" />
+                    <Button type="submit" variant="danger">
+                      Set ON HOLD
+                    </Button>
+                  </form>
+                )}
               </Card>
             </>
           ) : null}

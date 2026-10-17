@@ -11,7 +11,8 @@ export function LeadForm({ compact = false }: { compact?: boolean }) {
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setStatus("loading");
-    const form = new FormData(e.currentTarget);
+    const formEl = e.currentTarget;
+    const form = new FormData(formEl);
     try {
       await api("/v1/leads", {
         method: "POST",
@@ -26,7 +27,7 @@ export function LeadForm({ compact = false }: { compact?: boolean }) {
       });
       setStatus("done");
       setMessage("Request received. Our ops team will follow up — or log in to track progress.");
-      e.currentTarget.reset();
+      formEl.reset();
     } catch (err) {
       setStatus("error");
       setMessage(err instanceof Error ? err.message : "Something went wrong");

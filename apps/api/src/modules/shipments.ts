@@ -6,17 +6,12 @@ import {
 } from "@elios/shared";
 import { prisma } from "../lib/prisma.js";
 import { requireAuth, requireRoles } from "../middleware/auth.js";
-import { badRequest, forbidden, notFound } from "../lib/errors.js";
+import { badRequest, notFound } from "../lib/errors.js";
 import { logActivity, notifyUser } from "../lib/activity.js";
+import { assertOrgAccess, orgScopeWhere } from "../lib/org-access.js";
 import { createTrackingToken, hashToken } from "../lib/tokens.js";
 
 export const shipmentsRouter = Router();
-
-function orgScope(user: Express.Request["user"]) {
-  if (!user) return {};
-  if (user.role === "CLIENT") return { organizationId: user.organizationId };
-  return {};
-}
 
 /** Shipments are created only when a client accepts a quote — not assigned by Ops. */
 shipmentsRouter.post("/", requireAuth, async (_req, res, next) => {
@@ -32,7 +27,7 @@ shipmentsRouter.get("/", requireAuth, async (req, res, next) => {
     const { status, mode, q } = req.query;
     const shipments = await prisma.shipment.findMany({
       where: {
-        ...orgScope(req.user),
+        ...orgScopeWhere(req.user),
         ...(status ? { status: String(status) as never } : {}),
         ...(mode ? { mode: String(mode) as never } : {}),
         ...(q
@@ -63,7 +58,7 @@ shipmentsRouter.get("/kanban", requireAuth, async (req, res, next) => {
   try {
     const shipments = await prisma.shipment.findMany({
       where: {
-        ...orgScope(req.user),
+        ...orgScopeWhere(req.user),
         status: { not: "CANCELLED" },
       },
       orderBy: { updatedAt: "desc" },
@@ -84,7 +79,7 @@ shipmentsRouter.get("/kanban", requireAuth, async (req, res, next) => {
 
 shipmentsRouter.get("/analytics", requireAuth, async (req, res, next) => {
   try {
-    const where = orgScope(req.user);
+    const where = orgScopeWhere(req.user);
     const shipments = await prisma.shipment.findMany({
       where,
       select: { status: true, mode: true },
@@ -108,7 +103,7 @@ shipmentsRouter.get("/analytics", requireAuth, async (req, res, next) => {
 shipmentsRouter.get("/export.csv", requireAuth, async (req, res, next) => {
   try {
     const shipments = await prisma.shipment.findMany({
-      where: orgScope(req.user),
+      where: orgScopeWhere(req.user),
       orderBy: { createdAt: "desc" },
       include: { organization: true, assignee: true },
     });
@@ -163,9 +158,7 @@ shipmentsRouter.get("/:id", requireAuth, async (req, res, next) => {
       },
     });
     if (!shipment) throw notFound("Shipment not found");
-    if (req.user!.role === "CLIENT" && shipment.organizationId !== req.user!.organizationId) {
-      throw forbidden();
-    }
+    assertOrgAccess(req.user!, shipment.organizationId);
     res.json({ shipment });
   } catch (err) {
     next(err);
@@ -175,11 +168,23 @@ shipmentsRouter.get("/:id", requireAuth, async (req, res, next) => {
 shipmentsRouter.patch("/:id", requireAuth, requireRoles("OPS", "ADMIN"), async (req, res, next) => {
   try {
     const body = updateShipmentSchema.parse(req.body);
+    const existing = await prisma.shipment.findUnique({ where: { id: req.params.id } });
+    if (!existing) throw notFound("Shipment not found");
+
+    const leavingHold =
+      existing.status === "ON_HOLD" &&
+      body.status !== undefined &&
+      body.status !== "ON_HOLD";
+    const clearHoldReason =
+      body.holdReason === null ||
+      leavingHold ||
+      (body.status !== undefined && body.status !== "ON_HOLD");
+
     const shipment = await prisma.shipment.update({
       where: { id: req.params.id },
       data: {
         status: body.status,
-        holdReason: body.holdReason === null ? null : body.holdReason,
+        holdReason: clearHoldReason ? null : body.holdReason === undefined ? undefined : body.holdReason,
         assigneeId: body.assigneeId === null ? null : body.assigneeId,
         etd: body.etd ? new Date(body.etd) : body.etd === null ? null : undefined,
         eta: body.eta ? new Date(body.eta) : body.eta === null ? null : undefined,
@@ -187,16 +192,36 @@ shipmentsRouter.patch("/:id", requireAuth, requireRoles("OPS", "ADMIN"), async (
       include: { organization: true },
     });
 
-    if (body.status === "ON_HOLD" && body.holdReason) {
+    if (body.status && body.status !== existing.status) {
+      const statusLabel = body.status.replaceAll("_", " ");
       await prisma.shipmentEvent.create({
         data: {
           shipmentId: shipment.id,
-          title: "Shipment on hold",
-          description: body.holdReason,
+          title:
+            body.status === "ON_HOLD"
+              ? "Shipment on hold"
+              : leavingHold
+                ? "Hold cleared"
+                : `Status → ${statusLabel}`,
+          description:
+            body.status === "ON_HOLD"
+              ? body.holdReason ?? undefined
+              : leavingHold
+                ? `Resumed as ${statusLabel}`
+                : `Updated from ${existing.status.replaceAll("_", " ")}`,
           occurredAt: new Date(),
           createdById: req.user!.userId,
         },
       });
+
+      const clients = await prisma.membership.findMany({
+        where: { organizationId: shipment.organizationId, role: "CLIENT" },
+      });
+      const detail =
+        body.status === "ON_HOLD" && body.holdReason
+          ? `${shipment.referenceCode} is ON HOLD — ${body.holdReason}`
+          : `${shipment.referenceCode} status → ${statusLabel}`;
+      await Promise.all(clients.map((m) => notifyUser(m.userId, "Shipment status update", detail)));
     }
 
     await logActivity({
@@ -234,17 +259,21 @@ shipmentsRouter.post("/:id/events", requireAuth, requireRoles("OPS", "ADMIN"), a
     if (body.status) {
       await prisma.shipment.update({
         where: { id: shipment.id },
-        data: { status: body.status },
+        data: {
+          status: body.status,
+          ...(body.status !== "ON_HOLD" ? { holdReason: null } : {}),
+        },
       });
     }
 
     const clients = await prisma.membership.findMany({
       where: { organizationId: shipment.organizationId, role: "CLIENT" },
     });
+    const notifyBody = body.status
+      ? `${shipment.referenceCode}: ${body.title} · status → ${body.status.replaceAll("_", " ")}`
+      : `${shipment.referenceCode}: ${body.title}`;
     await Promise.all(
-      clients.map((m) =>
-        notifyUser(m.userId, "Shipment update", `${shipment.referenceCode}: ${body.title}`),
-      ),
+      clients.map((m) => notifyUser(m.userId, "Shipment update", notifyBody)),
     );
 
     await logActivity({
@@ -266,9 +295,7 @@ shipmentsRouter.post("/:id/comments", requireAuth, async (req, res, next) => {
     const body = shipmentCommentSchema.parse(req.body);
     const shipment = await prisma.shipment.findUnique({ where: { id: req.params.id } });
     if (!shipment) throw notFound("Shipment not found");
-    if (req.user!.role === "CLIENT" && shipment.organizationId !== req.user!.organizationId) {
-      throw forbidden();
-    }
+    assertOrgAccess(req.user!, shipment.organizationId);
     const comment = await prisma.shipmentComment.create({
       data: {
         shipmentId: shipment.id,

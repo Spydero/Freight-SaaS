@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import Link from "next/link";
 import { KANBAN_COLUMNS } from "@elios/shared";
 import { api } from "@/lib/api";
-import { Badge, Card, PageHeader, statusTone } from "@/components/ui";
+import { useLiveReload } from "@/lib/use-live-reload";
+import { Badge, Button, Card, PageHeader, statusTone } from "@/components/ui";
 
 type Shipment = {
   id: string;
@@ -20,17 +21,23 @@ type Shipment = {
 export default function KanbanPage() {
   const [columns, setColumns] = useState<Record<string, Shipment[]>>({});
 
-  useEffect(() => {
-    api<{ columns: Record<string, Shipment[]> }>("/v1/shipments/kanban")
-      .then((res) => setColumns(res.columns))
-      .catch(console.error);
+  const load = useCallback(async () => {
+    const res = await api<{ columns: Record<string, Shipment[]> }>("/v1/shipments/kanban");
+    setColumns(res.columns);
   }, []);
+
+  useLiveReload(load, [load]);
 
   return (
     <div>
       <PageHeader
         title="Ops kanban"
         description="Shipments by status. Drag-and-drop can come later — click a card for details."
+        actions={
+          <Button variant="secondary" onClick={() => void load()}>
+            Refresh
+          </Button>
+        }
       />
       <div className="flex gap-4 overflow-x-auto pb-4">
         {KANBAN_COLUMNS.map((status) => {

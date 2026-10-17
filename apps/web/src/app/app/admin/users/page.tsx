@@ -52,7 +52,8 @@ export default function AdminUsersPage() {
     e.preventDefault();
     setMsg("");
     setError("");
-    const form = new FormData(e.currentTarget);
+    const formEl = e.currentTarget;
+    const form = new FormData(formEl);
     try {
       await api("/v1/admin/organizations", {
         method: "POST",
@@ -61,7 +62,7 @@ export default function AdminUsersPage() {
           billingEmail: form.get("billingEmail") || undefined,
         }),
       });
-      e.currentTarget.reset();
+      formEl.reset();
       setMsg("Company created.");
       await load();
     } catch (err) {
@@ -73,7 +74,8 @@ export default function AdminUsersPage() {
     e.preventDefault();
     setMsg("");
     setError("");
-    const form = new FormData(e.currentTarget);
+    const formEl = e.currentTarget;
+    const form = new FormData(formEl);
     const mode = String(form.get("mode"));
     try {
       await api("/v1/admin/clients", {
@@ -87,7 +89,7 @@ export default function AdminUsersPage() {
             : { companyName: form.get("companyName") }),
         }),
       });
-      e.currentTarget.reset();
+      formEl.reset();
       setMsg("Client (acceptor) account created. Share the password with them.");
       await load();
     } catch (err) {
@@ -117,7 +119,8 @@ export default function AdminUsersPage() {
     e.preventDefault();
     setMsg("");
     setError("");
-    const form = new FormData(e.currentTarget);
+    const formEl = e.currentTarget;
+    const form = new FormData(formEl);
     try {
       await api("/v1/admin/staff", {
         method: "POST",
@@ -128,7 +131,7 @@ export default function AdminUsersPage() {
           role: form.get("role"),
         }),
       });
-      e.currentTarget.reset();
+      formEl.reset();
       setMsg("Staff account created.");
       await load();
     } catch (err) {
@@ -182,7 +185,7 @@ export default function AdminUsersPage() {
             </div>
             <div>
               <Label>Existing company</Label>
-              <Select name="organizationId" defaultValue={orgs.find((o) => o.name.includes("Acme"))?.id ?? orgs[0]?.id}>
+              <Select name="organizationId" defaultValue={orgs[0]?.id}>
                 {orgs.map((o) => (
                   <option key={o.id} value={o.id}>
                     {o.name}

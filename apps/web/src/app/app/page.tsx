@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import Link from "next/link";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { useLiveReload } from "@/lib/use-live-reload";
 import { Badge, Card, PageHeader, statusTone } from "@/components/ui";
 import { formatDate } from "@/lib/utils";
 
@@ -30,9 +31,12 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const [data, setData] = useState<Dash | null>(null);
 
-  useEffect(() => {
-    api<Dash>("/v1/dashboard").then(setData).catch(console.error);
+  const load = useCallback(async () => {
+    const dash = await api<Dash>("/v1/dashboard");
+    setData(dash);
   }, []);
+
+  useLiveReload(load, [load]);
 
   const kpis = [
     { label: "Open leads", value: data?.kpis.openLeads ?? "—", hide: user?.role === "CLIENT" },

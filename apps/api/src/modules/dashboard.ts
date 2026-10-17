@@ -1,13 +1,14 @@
 import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 import { requireAuth } from "../middleware/auth.js";
+import { orgScopeWhere } from "../lib/org-access.js";
 
 export const dashboardRouter = Router();
 
 dashboardRouter.get("/", requireAuth, async (req, res, next) => {
   try {
-    const orgId = req.user!.organizationId;
     const isClient = req.user!.role === "CLIENT";
+    const scope = orgScopeWhere(req.user);
 
     const [openLeads, pendingQuotes, activeShipments, onHold, unread] = await Promise.all([
       isClient
@@ -16,19 +17,19 @@ dashboardRouter.get("/", requireAuth, async (req, res, next) => {
       prisma.quote.count({
         where: {
           status: "SENT",
-          ...(isClient ? { organizationId: orgId } : {}),
+          ...scope,
         },
       }),
       prisma.shipment.count({
         where: {
           status: { in: ["BOOKED", "IN_TRANSIT", "AT_CUSTOMS", "OUT_FOR_DELIVERY"] },
-          ...(isClient ? { organizationId: orgId } : {}),
+          ...scope,
         },
       }),
       prisma.shipment.count({
         where: {
           status: "ON_HOLD",
-          ...(isClient ? { organizationId: orgId } : {}),
+          ...scope,
         },
       }),
       prisma.notification.count({
@@ -37,7 +38,7 @@ dashboardRouter.get("/", requireAuth, async (req, res, next) => {
     ]);
 
     const recentShipments = await prisma.shipment.findMany({
-      where: isClient ? { organizationId: orgId } : {},
+      where: scope,
       orderBy: { updatedAt: "desc" },
       take: 5,
       include: {

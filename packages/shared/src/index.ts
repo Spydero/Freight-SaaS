@@ -134,7 +134,11 @@ export const shipmentEventSchema = z.object({
   description: z.string().max(2000).optional(),
   location: z.string().max(200).optional(),
   occurredAt: z.string().optional(),
-  status: ShipmentStatus.optional(),
+  // HTML select "Keep current" sends ""; treat as unset
+  status: z
+    .union([ShipmentStatus, z.literal("")])
+    .optional()
+    .transform((v) => (v === "" || v === undefined ? undefined : v)),
 });
 
 export const shipmentCommentSchema = z.object({

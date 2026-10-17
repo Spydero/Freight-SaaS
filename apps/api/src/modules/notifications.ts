@@ -2,6 +2,7 @@ import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 import { requireAuth } from "../middleware/auth.js";
 import { logActivity } from "../lib/activity.js";
+import { orgScopeWhere } from "../lib/org-access.js";
 
 export const notificationsRouter = Router();
 
@@ -34,12 +35,8 @@ export const activityRouter = Router();
 
 activityRouter.get("/", requireAuth, async (req, res, next) => {
   try {
-    const where =
-      req.user!.role === "CLIENT"
-        ? { organizationId: req.user!.organizationId }
-        : {};
     const activity = await prisma.activityLog.findMany({
-      where,
+      where: orgScopeWhere(req.user),
       orderBy: { createdAt: "desc" },
       take: 40,
       include: {
@@ -60,8 +57,7 @@ searchRouter.get("/", requireAuth, async (req, res, next) => {
     const q = String(req.query.q ?? "").trim();
     if (!q) return res.json({ results: [] });
 
-    const orgFilter =
-      req.user!.role === "CLIENT" ? { organizationId: req.user!.organizationId } : {};
+    const orgFilter = orgScopeWhere(req.user);
 
     const [shipments, quotes, leads] = await Promise.all([
       prisma.shipment.findMany({
