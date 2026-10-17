@@ -103,6 +103,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             Search shipments, quotes, leads…
           </Link>
         </div>
+        {user.role === "CLIENT" && user.organizationApprovalStatus === "PENDING" ? (
+          <div className="border-b border-amber-500/30 bg-amber-500/10 px-6 py-3 text-sm text-amber-100">
+            Your company <strong>{user.organizationName}</strong> is pending Ternline admin approval.
+            You can log in and browse, but you cannot accept or reject quotations until approved.
+          </div>
+        ) : null}
+        {user.role === "CLIENT" && user.organizationApprovalStatus === "REJECTED" ? (
+          <div className="border-b border-red-500/30 bg-red-500/10 px-6 py-3 text-sm text-red-100">
+            Your company registration was not approved. Contact Ternline support.
+          </div>
+        ) : null}
         <div className="px-6 py-6">{children}</div>
       </div>
     </div>

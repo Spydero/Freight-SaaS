@@ -4,6 +4,7 @@ import { prisma } from "../lib/prisma.js";
 import { requireAuth, requireRoles } from "../middleware/auth.js";
 import { badRequest, forbidden, notFound } from "../lib/errors.js";
 import { logActivity, notifyUser } from "../lib/activity.js";
+import { assertClientOrgApproved } from "../lib/org-access.js";
 import { createTrackingToken, makeReferenceCode } from "../lib/tokens.js";
 
 export const quotesRouter = Router();
@@ -130,6 +131,9 @@ quotesRouter.post("/:id/accept", requireAuth, requireRoles("CLIENT", "ADMIN"), a
     if (req.user!.role === "CLIENT" && quote.organizationId !== req.user!.organizationId) {
       throw forbidden();
     }
+    if (req.user!.role === "CLIENT") {
+      await assertClientOrgApproved(quote.organizationId);
+    }
     if (quote.status !== "SENT" && quote.status !== "REVISION_REQUESTED") {
       throw badRequest("Quote cannot be accepted in its current status");
     }
@@ -203,6 +207,9 @@ quotesRouter.post("/:id/reject", requireAuth, requireRoles("CLIENT", "ADMIN"), a
     if (req.user!.role === "CLIENT" && quote.organizationId !== req.user!.organizationId) {
       throw forbidden();
     }
+    if (req.user!.role === "CLIENT") {
+      await assertClientOrgApproved(quote.organizationId);
+    }
     const updated = await prisma.quote.update({
       where: { id: quote.id },
       data: { status: "REJECTED" },
@@ -218,6 +225,7 @@ quotesRouter.post("/:id/request-revision", requireAuth, requireRoles("CLIENT"), 
     const quote = await prisma.quote.findUnique({ where: { id: req.params.id } });
     if (!quote) throw notFound("Quote not found");
     if (quote.organizationId !== req.user!.organizationId) throw forbidden();
+    await assertClientOrgApproved(quote.organizationId);
     const updated = await prisma.quote.update({
       where: { id: quote.id },
       data: { status: "REVISION_REQUESTED", notes: req.body?.notes ?? quote.notes },

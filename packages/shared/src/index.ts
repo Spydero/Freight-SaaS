@@ -3,6 +3,14 @@ import { z } from "zod";
 export const Role = z.enum(["ADMIN", "OPS", "CLIENT"]);
 export type Role = z.infer<typeof Role>;
 
+export const OrgApprovalStatus = z.enum(["PENDING", "APPROVED", "REJECTED"]);
+export type OrgApprovalStatus = z.infer<typeof OrgApprovalStatus>;
+
+export const adminOrgApprovalSchema = z.object({
+  status: z.enum(["APPROVED", "REJECTED"]),
+  rejectionReason: z.string().max(1000).optional(),
+});
+
 export const FreightMode = z.enum([
   "OCEAN",
   "RAIL",

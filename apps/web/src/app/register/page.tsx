@@ -40,8 +40,9 @@ export default function RegisterPage() {
         </Link>
         <h1 className="mt-6 text-2xl font-semibold">Client registration</h1>
         <p className="mt-2 text-sm text-white/55">
-          Open signup for <strong className="text-white/80">client companies</strong> only. You can
-          accept quotes and track shipments. Ternline staff accounts are created by an admin.
+          Open signup for <strong className="text-white/80">client companies</strong> only. After
+          registering you can log in, but an admin must approve your business before you can accept
+          quotations. Staff accounts are created by an admin.
         </p>
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
           <div>

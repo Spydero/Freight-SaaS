@@ -18,6 +18,8 @@ export type AuthUser = {
   role: "ADMIN" | "OPS" | "CLIENT";
   organizationId: string;
   organizationName: string;
+  organizationApprovalStatus: "PENDING" | "APPROVED" | "REJECTED";
+  canAcceptQuotes: boolean;
 };
 
 type AuthContextValue = {

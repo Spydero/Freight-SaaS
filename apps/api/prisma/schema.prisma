@@ -66,13 +66,23 @@ enum ServiceCategory {
   VAS
 }
 
+enum OrgApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model Organization {
-  id           String   @id @default(cuid())
-  name         String
-  slug         String   @unique
-  billingEmail String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id             String            @id @default(cuid())
+  name           String
+  slug           String            @unique
+  billingEmail   String?
+  approvalStatus OrgApprovalStatus @default(PENDING)
+  approvedAt     DateTime?
+  approvedById   String?
+  rejectionReason String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
 
   members       Membership[]
   quoteRequests QuoteRequest[]

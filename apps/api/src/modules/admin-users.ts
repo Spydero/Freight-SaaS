@@ -4,6 +4,7 @@ import {
   adminCreateClientSchema,
   adminCreateOrgSchema,
   adminCreateStaffSchema,
+  adminOrgApprovalSchema,
 } from "@elios/shared";
 import { prisma } from "../lib/prisma.js";
 import { badRequest, notFound } from "../lib/errors.js";
@@ -48,7 +49,7 @@ adminUsersRouter.get("/users", async (_req, res, next) => {
 adminUsersRouter.get("/organizations", async (_req, res, next) => {
   try {
     const organizations = await prisma.organization.findMany({
-      orderBy: { name: "asc" },
+      orderBy: [{ approvalStatus: "asc" }, { name: "asc" }],
       include: {
         _count: { select: { members: true, shipments: true, quotes: true } },
       },
@@ -67,6 +68,10 @@ adminUsersRouter.post("/organizations", async (req, res, next) => {
         name: body.name,
         slug: slugify(body.name),
         billingEmail: body.billingEmail?.toLowerCase(),
+        // Admin-created companies are pre-verified
+        approvalStatus: "APPROVED",
+        approvedAt: new Date(),
+        approvedById: req.user!.userId,
       },
     });
     await logActivity({
@@ -77,6 +82,51 @@ adminUsersRouter.post("/organizations", async (req, res, next) => {
       entityId: org.id,
     });
     res.status(201).json({ organization: org });
+  } catch (err) {
+    next(err);
+  }
+});
+
+adminUsersRouter.patch("/organizations/:id/approval", async (req, res, next) => {
+  try {
+    const body = adminOrgApprovalSchema.parse(req.body);
+    const existing = await prisma.organization.findUnique({ where: { id: req.params.id } });
+    if (!existing) throw notFound("Organization not found");
+
+    const org = await prisma.organization.update({
+      where: { id: req.params.id },
+      data: {
+        approvalStatus: body.status,
+        approvedAt: body.status === "APPROVED" ? new Date() : null,
+        approvedById: body.status === "APPROVED" ? req.user!.userId : null,
+        rejectionReason: body.status === "REJECTED" ? body.rejectionReason ?? "Rejected by admin" : null,
+      },
+    });
+
+    const clients = await prisma.membership.findMany({
+      where: { organizationId: org.id, role: "CLIENT" },
+    });
+    await Promise.all(
+      clients.map((m) =>
+        notifyUser(
+          m.userId,
+          body.status === "APPROVED" ? "Company approved" : "Company rejected",
+          body.status === "APPROVED"
+            ? `${org.name} is approved. You can now accept and reject quotations.`
+            : `${org.name} was not approved. ${body.rejectionReason ?? ""}`.trim(),
+        ),
+      ),
+    );
+
+    await logActivity({
+      organizationId: org.id,
+      actorId: req.user!.userId,
+      action: body.status === "APPROVED" ? "org.approved" : "org.rejected",
+      entityType: "Organization",
+      entityId: org.id,
+    });
+
+    res.json({ organization: org });
   } catch (err) {
     next(err);
   }
@@ -96,12 +146,16 @@ adminUsersRouter.post("/clients", async (req, res, next) => {
           name: body.companyName!,
           slug: slugify(body.companyName!),
           billingEmail: email,
+          approvalStatus: "APPROVED",
+          approvedAt: new Date(),
+          approvedById: req.user!.userId,
         },
       });
       organizationId = org.id;
     } else {
       const org = await prisma.organization.findUnique({ where: { id: organizationId } });
       if (!org) throw notFound("Organization not found");
+      // Attaching a user to an existing company does not auto-approve; admin must approve PENDING orgs.
     }
 
     const passwordHash = await bcrypt.hash(body.password, 10);

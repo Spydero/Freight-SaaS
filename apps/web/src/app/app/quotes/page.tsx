@@ -94,14 +94,20 @@ export default function QuotesPage() {
                   <Button variant="secondary">Details / PDF</Button>
                 </Link>
                 {user?.role === "CLIENT" && q.status === "SENT" ? (
-                  <>
-                    <Button disabled={busy === q.id} onClick={() => accept(q.id)}>
-                      Accept
-                    </Button>
-                    <Button variant="ghost" disabled={busy === q.id} onClick={() => reject(q.id)}>
-                      Reject
-                    </Button>
-                  </>
+                  user.canAcceptQuotes ? (
+                    <>
+                      <Button disabled={busy === q.id} onClick={() => accept(q.id)}>
+                        Accept
+                      </Button>
+                      <Button variant="ghost" disabled={busy === q.id} onClick={() => reject(q.id)}>
+                        Reject
+                      </Button>
+                    </>
+                  ) : (
+                    <p className="text-xs text-amber-200/90">
+                      Pending company approval — accept/reject locked
+                    </p>
+                  )
                 ) : null}
               </div>
             </div>

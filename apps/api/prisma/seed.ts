@@ -67,10 +67,22 @@ async function main() {
   const passwordHash = await bcrypt.hash(demoPassword, 10);
 
   const acme = await prisma.organization.create({
-    data: { name: "Acme Trading Co.", slug: "acme", billingEmail: "client@ternline.demo" },
+    data: {
+      name: "Acme Trading Co.",
+      slug: "acme",
+      billingEmail: "client@ternline.demo",
+      approvalStatus: "APPROVED",
+      approvedAt: new Date(),
+    },
   });
   const globex = await prisma.organization.create({
-    data: { name: "Globex Corp.", slug: "globex", billingEmail: "ops@ternline.demo" },
+    data: {
+      name: "Globex Corp.",
+      slug: "globex",
+      billingEmail: "ops@ternline.demo",
+      approvalStatus: "APPROVED",
+      approvedAt: new Date(),
+    },
   });
 
   const admin = await prisma.user.create({

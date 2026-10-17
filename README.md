@@ -80,10 +80,12 @@ See [`TERNLINE-PORTFOLIO-SPEC.md`](./TERNLINE-PORTFOLIO-SPEC.md) for PRD, scope,
 | **OPS / ADMIN** | Ternline logistics staff (your company) | See leads, create quotes, update shipments, kanban |
 | **CLIENT** | Customer company user (e.g. Acme Trading) | Accept/reject quotes, view own shipments, comment |
 
-**Account creation (hybrid):**
-- **Public `/register`** → **CLIENT only** (new customer company + acceptor user)
-- **Admin → Users** (`admin@ternline.demo`) → create **client accounts on behalf of customers**, create companies, create **OPS/ADMIN staff**
+**Account creation + approval (hybrid):**
+- **Public `/register`** → **CLIENT only**, company starts **PENDING**
+- Client can log in while pending, but **cannot accept/reject quotes** until Admin approves the company
+- **Admin → Users** → Approve/Reject companies; also create clients/staff (admin-created companies are **APPROVED**)
 - Nobody can self-register as Ops/Admin
+- **Quotes:** Ops creates/sends; **approved** Client accepts/rejects
 
 **Customer vs company:**  
 - A **client user** (acceptor) is a person with role `CLIENT`.  

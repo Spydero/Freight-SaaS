@@ -10,6 +10,7 @@ type Org = {
   id: string;
   name: string;
   slug: string;
+  approvalStatus: "PENDING" | "APPROVED" | "REJECTED";
   _count?: { members: number; shipments: number; quotes: number };
 };
 
@@ -88,6 +89,24 @@ export default function AdminUsersPage() {
       });
       e.currentTarget.reset();
       setMsg("Client (acceptor) account created. Share the password with them.");
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed");
+    }
+  }
+
+  async function setApproval(orgId: string, status: "APPROVED" | "REJECTED") {
+    setMsg("");
+    setError("");
+    try {
+      await api(`/v1/admin/organizations/${orgId}/approval`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          status,
+          rejectionReason: status === "REJECTED" ? "Business verification failed (demo)" : undefined,
+        }),
+      });
+      setMsg(status === "APPROVED" ? "Company approved — clients can accept quotes." : "Company rejected.");
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed");
@@ -221,21 +240,46 @@ export default function AdminUsersPage() {
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <Card className="overflow-hidden">
-          <div className="border-b border-white/10 px-4 py-3 font-semibold">Companies</div>
+          <div className="border-b border-white/10 px-4 py-3 font-semibold">Companies & approvals</div>
           <table className="w-full text-left text-sm">
             <thead className="bg-white/5 text-white/45">
               <tr>
                 <th className="px-4 py-2">Name</th>
+                <th className="px-4 py-2">Status</th>
                 <th className="px-4 py-2">Members</th>
-                <th className="px-4 py-2">Shipments</th>
+                <th className="px-4 py-2">Actions</th>
               </tr>
             </thead>
             <tbody>
               {orgs.map((o) => (
                 <tr key={o.id} className="border-t border-white/10">
                   <td className="px-4 py-2">{o.name}</td>
+                  <td className="px-4 py-2">
+                    <Badge
+                      tone={
+                        o.approvalStatus === "APPROVED"
+                          ? "success"
+                          : o.approvalStatus === "PENDING"
+                            ? "warn"
+                            : "danger"
+                      }
+                    >
+                      {o.approvalStatus}
+                    </Badge>
+                  </td>
                   <td className="px-4 py-2">{o._count?.members ?? "—"}</td>
-                  <td className="px-4 py-2">{o._count?.shipments ?? "—"}</td>
+                  <td className="px-4 py-2">
+                    {o.approvalStatus !== "APPROVED" ? (
+                      <Button variant="secondary" onClick={() => setApproval(o.id, "APPROVED")}>
+                        Approve
+                      </Button>
+                    ) : null}
+                    {o.approvalStatus === "PENDING" ? (
+                      <Button variant="ghost" className="ml-1" onClick={() => setApproval(o.id, "REJECTED")}>
+                        Reject
+                      </Button>
+                    ) : null}
+                  </td>
                 </tr>
               ))}
             </tbody>

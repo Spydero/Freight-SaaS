@@ -1,5 +1,5 @@
 import { SignJWT, jwtVerify } from "jose";
-import type { Role } from "@elios/shared";
+import type { OrgApprovalStatus, Role } from "@elios/shared";
 import { env } from "./env.js";
 
 const secret = new TextEncoder().encode(env.SESSION_SECRET);
@@ -12,6 +12,7 @@ export type SessionPayload = {
   role: Role;
   organizationId: string;
   organizationName: string;
+  organizationApprovalStatus: OrgApprovalStatus;
 };
 
 export async function signSession(payload: SessionPayload) {

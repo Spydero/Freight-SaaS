@@ -3,10 +3,10 @@ import bcrypt from "bcryptjs";
 import { loginSchema, registerSchema } from "@elios/shared";
 import { prisma } from "../lib/prisma.js";
 import { badRequest, unauthorized } from "../lib/errors.js";
-import { SESSION_COOKIE, signSession } from "../lib/session.js";
+import { SESSION_COOKIE, signSession, type SessionPayload } from "../lib/session.js";
 import { env } from "../lib/env.js";
 import { requireAuth } from "../middleware/auth.js";
-import { logActivity } from "../lib/activity.js";
+import { logActivity, notifyUser } from "../lib/activity.js";
 
 export const authRouter = Router();
 
@@ -20,7 +20,21 @@ function cookieOptions() {
   };
 }
 
-/** Public register — CLIENT companies only. Staff must be created by Admin. */
+function publicUser(payload: SessionPayload) {
+  return {
+    id: payload.userId,
+    email: payload.email,
+    name: payload.name,
+    role: payload.role,
+    organizationId: payload.organizationId,
+    organizationName: payload.organizationName,
+    organizationApprovalStatus: payload.organizationApprovalStatus,
+    canAcceptQuotes:
+      payload.role !== "CLIENT" || payload.organizationApprovalStatus === "APPROVED",
+  };
+}
+
+/** Public register — CLIENT companies only, starts PENDING approval. */
 authRouter.post("/register", async (req, res, next) => {
   try {
     const body = registerSchema.parse(req.body);
@@ -35,12 +49,12 @@ authRouter.post("/register", async (req, res, next) => {
     const slug = `${slugBase || "org"}-${Date.now().toString(36)}`;
 
     const passwordHash = await bcrypt.hash(body.password, 10);
-    // Role is hard-coded CLIENT — public signup cannot become OPS/ADMIN
     const org = await prisma.organization.create({
       data: {
         name: body.companyName,
         slug,
         billingEmail: body.email.toLowerCase(),
+        approvalStatus: "PENDING",
         members: {
           create: {
             role: "CLIENT",
@@ -58,34 +72,41 @@ authRouter.post("/register", async (req, res, next) => {
     });
 
     const membership = org.members[0]!;
-    const token = await signSession({
+    const session: SessionPayload = {
       userId: membership.userId,
       email: membership.user.email,
       name: membership.user.name,
       role: membership.role,
       organizationId: org.id,
       organizationName: org.name,
+      organizationApprovalStatus: org.approvalStatus,
+    };
+    const token = await signSession(session);
+
+    const admins = await prisma.membership.findMany({
+      where: { role: "ADMIN" },
+      select: { userId: true },
     });
+    await Promise.all(
+      admins.map((a) =>
+        notifyUser(
+          a.userId,
+          "New client pending approval",
+          `${org.name} registered and is waiting for business verification.`,
+        ),
+      ),
+    );
 
     await logActivity({
       organizationId: org.id,
       actorId: membership.userId,
-      action: "user.registered",
-      entityType: "User",
-      entityId: membership.userId,
+      action: "user.registered_pending",
+      entityType: "Organization",
+      entityId: org.id,
     });
 
     res.cookie(SESSION_COOKIE, token, cookieOptions());
-    res.status(201).json({
-      user: {
-        id: membership.userId,
-        email: membership.user.email,
-        name: membership.user.name,
-        role: membership.role,
-        organizationId: org.id,
-        organizationName: org.name,
-      },
-    });
+    res.status(201).json({ user: publicUser(session) });
   } catch (err) {
     next(err);
   }
@@ -104,26 +125,19 @@ authRouter.post("/login", async (req, res, next) => {
     const membership = user.memberships[0];
     if (!membership) throw unauthorized("No organization membership");
 
-    const token = await signSession({
+    const session: SessionPayload = {
       userId: user.id,
       email: user.email,
       name: user.name,
       role: membership.role,
       organizationId: membership.organizationId,
       organizationName: membership.organization.name,
-    });
+      organizationApprovalStatus: membership.organization.approvalStatus,
+    };
+    const token = await signSession(session);
 
     res.cookie(SESSION_COOKIE, token, cookieOptions());
-    res.json({
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: membership.role,
-        organizationId: membership.organizationId,
-        organizationName: membership.organization.name,
-      },
-    });
+    res.json({ user: publicUser(session) });
   } catch (err) {
     next(err);
   }
@@ -134,8 +148,30 @@ authRouter.post("/logout", (_req, res) => {
   res.json({ ok: true });
 });
 
-authRouter.get("/me", requireAuth, async (req, res) => {
-  res.json({ user: req.user });
+/** Always reload org approval from DB so admin approve applies without re-login. */
+authRouter.get("/me", requireAuth, async (req, res, next) => {
+  try {
+    const membership = await prisma.membership.findFirst({
+      where: { userId: req.user!.userId, organizationId: req.user!.organizationId },
+      include: { organization: true, user: true },
+    });
+    if (!membership) throw unauthorized();
+
+    const session: SessionPayload = {
+      userId: membership.userId,
+      email: membership.user.email,
+      name: membership.user.name,
+      role: membership.role,
+      organizationId: membership.organizationId,
+      organizationName: membership.organization.name,
+      organizationApprovalStatus: membership.organization.approvalStatus,
+    };
+    const token = await signSession(session);
+    res.cookie(SESSION_COOKIE, token, cookieOptions());
+    res.json({ user: publicUser(session) });
+  } catch (err) {
+    next(err);
+  }
 });
 
 authRouter.post("/forgot-password", async (req, res, next) => {
