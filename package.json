@@ -1,0 +1,20 @@
+{
+  "name": "elios",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm -r --parallel run dev",
+    "dev:web": "pnpm --filter @elios/web dev",
+    "dev:api": "pnpm --filter @elios/api dev",
+    "build": "pnpm -r run build",
+    "db:generate": "pnpm --filter @elios/api prisma:generate",
+    "db:migrate": "pnpm --filter @elios/api prisma:migrate",
+    "db:seed": "pnpm --filter @elios/api prisma:seed",
+    "db:setup": "pnpm db:migrate && pnpm db:seed",
+    "lint": "pnpm -r run lint",
+    "test": "pnpm -r run test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@9.15.0"
+}
