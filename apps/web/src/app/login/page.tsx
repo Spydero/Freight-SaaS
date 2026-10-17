@@ -9,8 +9,8 @@ import { Button, Input, Label } from "@/components/ui";
 const demos = [
   {
     email: "ops@ternline.demo",
-    label: "Ops (create quotes)",
-    hint: "Ternline staff — leads, quotes, kanban, milestones",
+    label: "Ops (quotes + create shipments)",
+    hint: "Ternline staff — leads, quotes, create shipments, kanban",
   },
   {
     email: "client@ternline.demo",

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api, API_URL } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 import { Badge, Button, Card, Input, PageHeader, Select, statusTone } from "@/components/ui";
 import { formatDate } from "@/lib/utils";
 
@@ -33,9 +34,11 @@ type Shipment = {
 };
 
 export default function ShipmentsPage() {
+  const { user } = useAuth();
   const [shipments, setShipments] = useState<Shipment[]>([]);
   const [status, setStatus] = useState("");
   const [q, setQ] = useState("");
+  const canCreate = user?.role === "OPS" || user?.role === "ADMIN";
 
   async function load() {
     const params = new URLSearchParams();
@@ -53,13 +56,23 @@ export default function ShipmentsPage() {
     <div>
       <PageHeader
         title="Shipments"
-        description="Filter, search, and open shipment detail timelines."
+        description="Filter, search, and open timelines. Clients also get shipments when they accept a quote."
         actions={
           <Button variant="secondary" onClick={() => void downloadCsv()}>
             Export CSV
           </Button>
         }
       />
+      {canCreate ? (
+        <div className="mb-4">
+          <Link
+            href="/app/shipments/new"
+            className="inline-flex items-center justify-center rounded-md bg-[var(--gold)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] hover:brightness-110"
+          >
+            + Create shipment
+          </Link>
+        </div>
+      ) : null}
       <div className="mb-4 flex flex-wrap gap-3">
         <Input
           placeholder="Search reference, route, commodity…"

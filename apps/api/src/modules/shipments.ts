@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  createShipmentSchema,
   shipmentCommentSchema,
   shipmentEventSchema,
   updateShipmentSchema,
@@ -8,7 +9,7 @@ import { prisma } from "../lib/prisma.js";
 import { requireAuth, requireRoles } from "../middleware/auth.js";
 import { forbidden, notFound } from "../lib/errors.js";
 import { logActivity, notifyUser } from "../lib/activity.js";
-import { createTrackingToken, hashToken } from "../lib/tokens.js";
+import { createTrackingToken, hashToken, makeReferenceCode } from "../lib/tokens.js";
 
 export const shipmentsRouter = Router();
 
@@ -17,6 +18,76 @@ function orgScope(user: Express.Request["user"]) {
   if (user.role === "CLIENT") return { organizationId: user.organizationId };
   return {};
 }
+
+shipmentsRouter.post("/", requireAuth, requireRoles("OPS", "ADMIN"), async (req, res, next) => {
+  try {
+    const body = createShipmentSchema.parse(req.body);
+    const org = await prisma.organization.findUnique({ where: { id: body.organizationId } });
+    if (!org) throw notFound("Organization not found");
+
+    const count = await prisma.shipment.count();
+    const token = createTrackingToken();
+
+    const shipment = await prisma.shipment.create({
+      data: {
+        organizationId: body.organizationId,
+        referenceCode: makeReferenceCode(count + 1),
+        mode: body.mode,
+        status: "BOOKED",
+        originLabel: body.originLabel,
+        destinationLabel: body.destinationLabel,
+        commodity: body.commodity,
+        weightKg: body.weightKg,
+        packageCount: body.packageCount,
+        containerCount: body.containerCount,
+        etd: body.etd ? new Date(body.etd) : undefined,
+        eta: body.eta ? new Date(body.eta) : undefined,
+        assigneeId: body.assigneeId ?? req.user!.userId,
+        trackingTokenHash: token.hash,
+        trackingTokenHint: token.hint,
+        events: {
+          create: {
+            title: "Shipment booked",
+            description: body.notes ?? "Created directly by ops (no quote).",
+            occurredAt: new Date(),
+            createdById: req.user!.userId,
+          },
+        },
+      },
+      include: {
+        organization: { select: { id: true, name: true } },
+        assignee: { select: { id: true, name: true } },
+      },
+    });
+
+    const clients = await prisma.membership.findMany({
+      where: { organizationId: body.organizationId, role: "CLIENT" },
+    });
+    await Promise.all(
+      clients.map((m) =>
+        notifyUser(
+          m.userId,
+          "Shipment booked",
+          `${shipment.referenceCode}: ${body.originLabel} → ${body.destinationLabel}`,
+        ),
+      ),
+    );
+
+    await logActivity({
+      organizationId: body.organizationId,
+      actorId: req.user!.userId,
+      action: "shipment.created",
+      entityType: "Shipment",
+      entityId: shipment.id,
+    });
+
+    res.status(201).json({
+      shipment: { ...shipment, trackingToken: token.raw },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
 
 shipmentsRouter.get("/", requireAuth, async (req, res, next) => {
   try {
