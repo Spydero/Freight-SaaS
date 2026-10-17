@@ -104,6 +104,20 @@ async function main() {
   });
 
   const ocean = services.find((s) => s.code === "OCEAN")!;
+  // Open lead Ops can convert from Leads → Send quote
+  await prisma.quoteRequest.create({
+    data: {
+      contactName: "Casey Client",
+      companyName: "Acme Trading Co.",
+      email: "client@ternline.demo",
+      destination: "Hamburg, DE",
+      message: "Need another FCL for spare parts — please quote.",
+      status: "NEW",
+      serviceId: ocean.id,
+      organizationId: acme.id,
+    },
+  });
+
   const lead = await prisma.quoteRequest.create({
     data: {
       contactName: "Casey Client",
@@ -111,13 +125,13 @@ async function main() {
       email: "client@ternline.demo",
       destination: "Rotterdam, NL",
       message: "Need FCL for electronics components.",
-      status: "NEW",
+      status: "QUOTED",
       serviceId: ocean.id,
       organizationId: acme.id,
     },
   });
 
-  const quote = await prisma.quote.create({
+  await prisma.quote.create({
     data: {
       organizationId: acme.id,
       quoteRequestId: lead.id,
@@ -143,8 +157,6 @@ async function main() {
       },
     },
   });
-
-  await prisma.quoteRequest.update({ where: { id: lead.id }, data: { status: "QUOTED" } });
 
   const tokenA = tracking();
   const sin = ports.find((p) => p.code === "SGSIN")!;

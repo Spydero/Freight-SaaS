@@ -28,7 +28,7 @@ export default function LeadsPage() {
   async function load() {
     const [l, o] = await Promise.all([
       api<{ leads: Lead[] }>("/v1/leads"),
-      api<{ organizations: Org[] }>("/v1/catalog/organizations"),
+      api<{ organizations: Org[] }>("/v1/catalog/organizations?clientsOnly=1&approvedOnly=1"),
     ]);
     setLeads(l.leads);
     setOrgs(o.organizations);
@@ -74,7 +74,19 @@ export default function LeadsPage() {
 
   return (
     <div>
-      <PageHeader title="Leads" description="Inbound shipment requests from the marketing form." />
+      <PageHeader
+        title="Leads"
+        description="Inbound requests from the marketing form. Select a lead to send a quote — or use Quotes → Create quotation without a lead."
+      />
+      {!leads.length ? (
+        <Card className="mb-4 p-4 text-sm text-white/60">
+          No leads yet. Submit the form on the homepage/contact page, or create a quotation directly from{" "}
+          <a className="text-[var(--gold)]" href="/app/quotes/new">
+            Quotes → Create quotation
+          </a>
+          .
+        </Card>
+      ) : null}
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <Card className="overflow-hidden">
           <table className="w-full text-left text-sm">

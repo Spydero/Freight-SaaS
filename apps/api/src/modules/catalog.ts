@@ -49,11 +49,25 @@ catalogRouter.get("/testimonials", async (_req, res, next) => {
   }
 });
 
-catalogRouter.get("/organizations", requireAuth, requireRoles("OPS", "ADMIN"), async (_req, res, next) => {
+catalogRouter.get("/organizations", requireAuth, requireRoles("OPS", "ADMIN"), async (req, res, next) => {
   try {
+    const clientsOnly = req.query.clientsOnly === "1" || req.query.clientsOnly === "true";
+    const approvedOnly = req.query.approvedOnly === "1" || req.query.approvedOnly === "true";
+
     const organizations = await prisma.organization.findMany({
+      where: {
+        ...(approvedOnly ? { approvalStatus: "APPROVED" } : {}),
+        ...(clientsOnly
+          ? { members: { some: { role: "CLIENT" } } }
+          : {}),
+      },
       orderBy: { name: "asc" },
-      select: { id: true, name: true, slug: true },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        approvalStatus: true,
+      },
     });
     res.json({ organizations });
   } catch (err) {

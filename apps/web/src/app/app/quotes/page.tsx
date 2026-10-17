@@ -72,6 +72,16 @@ export default function QuotesPage() {
             ? "Review offers from Ternline. Accepting a quote is what creates your shipment."
             : "Prepare and send quotations. A shipment is created only after the approved client accepts."
         }
+        actions={
+          user?.role === "OPS" || user?.role === "ADMIN" ? (
+            <Link
+              href="/app/quotes/new"
+              className="inline-flex items-center justify-center rounded-md bg-[var(--gold)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] hover:brightness-110"
+            >
+              + Create quotation
+            </Link>
+          ) : null
+        }
       />
       {message ? <p className="mb-4 text-sm text-[var(--gold-soft)]">{message}</p> : null}
       <div className="space-y-3">
