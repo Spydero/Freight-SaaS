@@ -80,10 +80,14 @@ See [`TERNLINE-PORTFOLIO-SPEC.md`](./TERNLINE-PORTFOLIO-SPEC.md) for PRD, scope,
 | **OPS / ADMIN** | Ternline logistics staff (your company) | See leads, create quotes, update shipments, kanban |
 | **CLIENT** | Customer company user (e.g. Acme Trading) | Accept/reject quotes, view own shipments, comment |
 
+**Account creation (hybrid):**
+- **Public `/register`** → **CLIENT only** (new customer company + acceptor user)
+- **Admin → Users** (`admin@ternline.demo`) → create **client accounts on behalf of customers**, create companies, create **OPS/ADMIN staff**
+- Nobody can self-register as Ops/Admin
+
 **Customer vs company:**  
-- A **customer** is a person (`User`) with role `CLIENT`.  
+- A **client user** (acceptor) is a person with role `CLIENT`.  
 - A **company** is an `Organization` (e.g. Acme Trading Co.).  
-- Clients belong to a customer org. Ops belonging to Ternline/Globex can work across client orgs.  
 Creating a quote (Ops) and accepting a quote (Client) are **different roles** — switch accounts to test both sides.
 
 ## How to create & test shipments

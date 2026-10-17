@@ -20,6 +20,7 @@ function cookieOptions() {
   };
 }
 
+/** Public register — CLIENT companies only. Staff must be created by Admin. */
 authRouter.post("/register", async (req, res, next) => {
   try {
     const body = registerSchema.parse(req.body);
@@ -34,6 +35,7 @@ authRouter.post("/register", async (req, res, next) => {
     const slug = `${slugBase || "org"}-${Date.now().toString(36)}`;
 
     const passwordHash = await bcrypt.hash(body.password, 10);
+    // Role is hard-coded CLIENT — public signup cannot become OPS/ADMIN
     const org = await prisma.organization.create({
       data: {
         name: body.companyName,

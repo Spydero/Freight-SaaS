@@ -55,11 +55,37 @@ export const loginSchema = z.object({
   password: z.string().min(6),
 });
 
+/** Public self-serve signup — always creates CLIENT + new company. */
 export const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
   name: z.string().min(1).max(120),
   companyName: z.string().min(1).max(160),
+});
+
+/** Admin creates a client (acceptor) under an existing or new company. */
+export const adminCreateClientSchema = z.object({
+  name: z.string().min(1).max(120),
+  email: z.string().email(),
+  password: z.string().min(6),
+  organizationId: z.string().optional(),
+  companyName: z.string().min(1).max(160).optional(),
+}).refine((v) => Boolean(v.organizationId || v.companyName), {
+  message: "Provide organizationId or companyName",
+});
+
+/** Admin creates Ternline staff (OPS or ADMIN). Never CLIENT via this path. */
+export const adminCreateStaffSchema = z.object({
+  name: z.string().min(1).max(120),
+  email: z.string().email(),
+  password: z.string().min(6),
+  role: z.enum(["OPS", "ADMIN"]),
+  organizationId: z.string().optional(),
+});
+
+export const adminCreateOrgSchema = z.object({
+  name: z.string().min(1).max(160),
+  billingEmail: z.string().email().optional(),
 });
 
 export const leadSchema = z.object({

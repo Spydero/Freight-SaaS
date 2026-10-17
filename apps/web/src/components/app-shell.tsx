@@ -14,6 +14,7 @@ import {
   Settings,
   LogOut,
   Search,
+  Users,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -26,6 +27,7 @@ const links = [
   { href: "/app/shipments", label: "Shipments", icon: Ship, roles: ["ADMIN", "OPS", "CLIENT"] },
   { href: "/app/kanban", label: "Kanban", icon: Columns3, roles: ["ADMIN", "OPS", "CLIENT"] },
   { href: "/app/analytics", label: "Analytics", icon: ChartColumn, roles: ["ADMIN", "OPS", "CLIENT"] },
+  { href: "/app/admin/users", label: "Users", icon: Users, roles: ["ADMIN"] },
   { href: "/app/notifications", label: "Notifications", icon: Bell, roles: ["ADMIN", "OPS", "CLIENT"] },
   { href: "/app/settings", label: "Settings", icon: Settings, roles: ["ADMIN", "OPS", "CLIENT"] },
 ];

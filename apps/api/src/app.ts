@@ -16,6 +16,7 @@ import {
   searchRouter,
 } from "./modules/notifications.js";
 import { dashboardRouter } from "./modules/dashboard.js";
+import { adminUsersRouter } from "./modules/admin-users.js";
 
 export function createApp() {
   const app = express();
@@ -43,6 +44,7 @@ export function createApp() {
   app.use("/v1/activity", activityRouter);
   app.use("/v1/search", searchRouter);
   app.use("/v1/dashboard", dashboardRouter);
+  app.use("/v1/admin", adminUsersRouter);
 
   app.use(errorHandler);
   return app;

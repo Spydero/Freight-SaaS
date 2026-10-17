@@ -38,8 +38,11 @@ export default function RegisterPage() {
         <Link href="/" className="font-[family-name:var(--font-display)] text-lg font-bold tracking-[0.18em]">
           Ternline
         </Link>
-        <h1 className="mt-6 text-2xl font-semibold">Create account</h1>
-        <p className="mt-2 text-sm text-white/55">Creates a client organization for your company.</p>
+        <h1 className="mt-6 text-2xl font-semibold">Client registration</h1>
+        <p className="mt-2 text-sm text-white/55">
+          Open signup for <strong className="text-white/80">client companies</strong> only. You can
+          accept quotes and track shipments. Ternline staff accounts are created by an admin.
+        </p>
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
           <div>
             <Label htmlFor="name">Full name</Label>
