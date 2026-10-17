@@ -1,4 +1,4 @@
-# ELIOS — Portfolio Shipping Management SaaS
+# Ternline — Portfolio Shipping Management SaaS
 
 **Status:** Planning document (no production business intent)  
 **Purpose:** A polished, deployable portfolio project that looks and feels like a real logistics SaaS  
@@ -26,7 +26,7 @@
 
 ## 2. Product thesis (portfolio framing)
 
-Visitors land on a dark, gold-accented logistics brand site (inspired by the ELIOS reference). They can:
+Visitors land on a dark, gold-accented logistics brand site (inspired by the Ternline reference). They can:
 
 1. Browse services, principles, team, and testimonials  
 2. Submit a “Plan your next shipment” form  
@@ -48,7 +48,7 @@ Auth alone is not enough. The app should feel like a real SaaS: marketing, CRM-l
 
 | # | Feature | Notes |
 |---|---------|--------|
-| M1 | Marketing site | Home, Services, About, Contact — ELIOS dark + gold |
+| M1 | Marketing site | Home, Services, About, Contact — Ternline dark + gold |
 | M2 | Register + Login + Logout | Real auth; invite/seed clients also OK |
 | M3 | Roles: Admin / Ops / Client | Different nav + permissions |
 | M4 | Lead capture + Ops inbox | Public form → QuoteRequest lifecycle |
@@ -112,9 +112,9 @@ Seed these in `prisma/seed.ts` and print them in the README:
 
 | Email | Password | Role | What they show |
 |-------|----------|------|----------------|
-| `ops@elios.demo` | `demo1234` | OPS | Lead inbox, create quotes, update milestones |
-| `client@elios.demo` | `demo1234` | CLIENT | Accept quotes, view shipments, download docs |
-| `admin@elios.demo` | `demo1234` | ADMIN | Optional: services/team content |
+| `ops@ternline.demo` | `demo1234` | OPS | Lead inbox, create quotes, update milestones |
+| `client@ternline.demo` | `demo1234` | CLIENT | Accept quotes, view shipments, download docs |
+| `admin@ternline.demo` | `demo1234` | ADMIN | Optional: services/team content |
 
 One demo organization: **Acme Trading Co.**  
 One pre-built shipment already in transit so the dashboard is never empty on first login.
@@ -351,7 +351,7 @@ Assume nights/weekends, ~1 person.
 | Phase | Time | Deliverable |
 |-------|------|-------------|
 | **0 Foundations** | 3–5 days | Monorepo, Prisma schema, seed users, auth login, Docker Postgres, CI lint/test |
-| **1 Marketing** | 4–6 days | ELIOS-style landing + lead form wired to API |
+| **1 Marketing** | 4–6 days | Ternline-style landing + lead form wired to API |
 | **2 Quotes** | 3–5 days | Ops create/send, Client accept → shipment |
 | **3 Tracking** | 3–5 days | Timeline UI, public track page, notifications mock |
 | **4 Polish + deploy** | 3–5 days | Seed richness, README, screenshots, Neon + Vercel + Railway, demo accounts |
@@ -400,8 +400,8 @@ Assume nights/weekends, ~1 person.
 
 1. Open live site — scroll marketing (hero → services → team → form).  
 2. Submit a shipment request as “Globex Corp”.  
-3. Login `ops@elios.demo` / `demo1234` — convert lead to quote.  
-4. Login `client@elios.demo` / `demo1234` — accept quote.  
+3. Login `ops@ternline.demo` / `demo1234` — convert lead to quote.  
+4. Login `client@ternline.demo` / `demo1234` — accept quote.  
 5. As Ops, add a milestone.  
 6. Open the public tracking link in a private window.  
 
@@ -413,7 +413,7 @@ When you want to leave planning mode:
 
 1. **Create a new GitHub repo** `elios` (do not mix into the healthcare monorepo unless you intend to).  
 2. Scaffold Phase 0 (pnpm monorepo + Prisma + seed).  
-3. Build marketing homepage against the ELIOS visual reference.  
+3. Build marketing homepage against the Ternline visual reference.  
 4. Wire the three demo flows.  
 5. Deploy and freeze the README.
 

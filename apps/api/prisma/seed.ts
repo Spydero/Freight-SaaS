@@ -21,7 +21,7 @@ function tracking() {
 }
 
 async function main() {
-  console.log("Seeding ELIOS demo data…");
+  console.log("Seeding Ternline demo data…");
 
   await prisma.shipmentComment.deleteMany();
   await prisma.shipmentEvent.deleteMany();
@@ -67,20 +67,20 @@ async function main() {
   const passwordHash = await bcrypt.hash(demoPassword, 10);
 
   const acme = await prisma.organization.create({
-    data: { name: "Acme Trading Co.", slug: "acme", billingEmail: "client@elios.demo" },
+    data: { name: "Acme Trading Co.", slug: "acme", billingEmail: "client@ternline.demo" },
   });
   const globex = await prisma.organization.create({
-    data: { name: "Globex Corp.", slug: "globex", billingEmail: "ops@elios.demo" },
+    data: { name: "Globex Corp.", slug: "globex", billingEmail: "ops@ternline.demo" },
   });
 
   const admin = await prisma.user.create({
-    data: { email: "admin@elios.demo", name: "Ava Admin", passwordHash },
+    data: { email: "admin@ternline.demo", name: "Ava Admin", passwordHash },
   });
   const ops = await prisma.user.create({
-    data: { email: "ops@elios.demo", name: "Omar Ops", passwordHash },
+    data: { email: "ops@ternline.demo", name: "Omar Ops", passwordHash },
   });
   const client = await prisma.user.create({
-    data: { email: "client@elios.demo", name: "Casey Client", passwordHash },
+    data: { email: "client@ternline.demo", name: "Casey Client", passwordHash },
   });
 
   await prisma.membership.createMany({
@@ -96,7 +96,7 @@ async function main() {
     data: {
       contactName: "Casey Client",
       companyName: "Acme Trading Co.",
-      email: "client@elios.demo",
+      email: "client@ternline.demo",
       destination: "Rotterdam, NL",
       message: "Need FCL for electronics components.",
       status: "NEW",
@@ -141,7 +141,7 @@ async function main() {
   const shipment = await prisma.shipment.create({
     data: {
       organizationId: acme.id,
-      referenceCode: "ELI-2026-00001",
+      referenceCode: "TRN-2026-00001",
       mode: "OCEAN",
       status: "IN_TRANSIT",
       originLabel: "Singapore",
@@ -174,7 +174,7 @@ async function main() {
           },
           {
             title: "Vessel departed",
-            description: "MV ELIOS STAR underway.",
+            description: "MV Ternline STAR underway.",
             location: "Singapore",
             occurredAt: new Date(Date.now() - 5 * 86400000),
             createdById: ops.id,
@@ -211,7 +211,7 @@ async function main() {
   await prisma.shipment.create({
     data: {
       organizationId: acme.id,
-      referenceCode: "ELI-2026-00002",
+      referenceCode: "TRN-2026-00002",
       mode: "AIR",
       status: "BOOKED",
       originLabel: "Frankfurt",
@@ -248,7 +248,7 @@ async function main() {
   await prisma.testimonial.create({
     data: {
       quote:
-        "ELIOS gave us reliable visibility across ocean lanes. Milestone updates replaced endless email threads.",
+        "Ternline gave us reliable visibility across ocean lanes. Milestone updates replaced endless email threads.",
       authorName: "Robert Peterson",
       authorTitle: "CEO, Northwind Supply",
       sortOrder: 1,
@@ -259,7 +259,7 @@ async function main() {
     data: [
       {
         userId: client.id,
-        title: "Welcome to ELIOS",
+        title: "Welcome to Ternline",
         body: "Explore your shipments and pending quotes. Demo password is shared in the README.",
       },
       {
@@ -283,7 +283,7 @@ async function main() {
 
   console.log("Seed complete.");
   console.log("Demo logins (password: %s):", demoPassword);
-  console.log("  admin@elios.demo / ops@elios.demo / client@elios.demo");
+  console.log("  admin@ternline.demo / ops@ternline.demo / client@ternline.demo");
   console.log("Sample public tracking token:", tokenA.raw);
   console.log("  GET /v1/track/%s", tokenA.raw);
 }

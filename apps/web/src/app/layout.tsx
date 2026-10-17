@@ -14,7 +14,7 @@ const display = Syne({
 });
 
 export const metadata: Metadata = {
-  title: "ELIOS — Modern Logistics",
+  title: "Ternline — Modern Logistics",
   description: "Portfolio shipping management SaaS — quotes, shipments, and tracking.",
 };
 

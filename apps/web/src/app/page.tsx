@@ -63,7 +63,7 @@ export default function HomePage() {
         />
         <div className="relative mx-auto flex min-h-[92vh] max-w-6xl flex-col justify-end px-6 pb-16 pt-28">
           <p className="font-[family-name:var(--font-display)] text-5xl font-bold tracking-[0.2em] text-white sm:text-7xl">
-            ELIOS
+            Ternline
           </p>
           <h1 className="mt-6 max-w-2xl text-3xl font-semibold leading-tight sm:text-5xl">
             Delivering confidence through modern logistics.
@@ -94,7 +94,7 @@ export default function HomePage() {
 
       <section className="mx-auto max-w-3xl px-6 py-24 text-center">
         <p className="text-xl leading-relaxed text-white/80 sm:text-2xl">
-          Founded with a commitment to reliability and efficiency, ELIOS helps businesses navigate
+          Founded with a commitment to reliability and efficiency, Ternline helps businesses navigate
           complex supply chains through integrated logistics workflows.
         </p>
         <div className="mt-8 flex justify-center gap-3">
@@ -121,7 +121,7 @@ export default function HomePage() {
               A logistics partner for a connected world.
             </h2>
             <p className="mt-4 text-white/65">
-              From first quote to final milestone, ELIOS keeps shippers and ops on the same page —
+              From first quote to final milestone, Ternline keeps shippers and ops on the same page —
               with kanban boards, document trails, and public tracking links.
             </p>
           </div>
@@ -197,7 +197,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-3xl px-6 text-center">
           <h2 className="text-2xl font-semibold sm:text-3xl">Trusted by businesses that keep moving.</h2>
           <blockquote className="mt-8 text-lg text-white/75 sm:text-xl">
-            “ELIOS gave us reliable visibility across ocean lanes. Milestone updates replaced endless
+            “Ternline gave us reliable visibility across ocean lanes. Milestone updates replaced endless
             email threads.”
           </blockquote>
           <p className="mt-4 text-sm text-[var(--gold)]">Robert Peterson — CEO, Northwind Supply</p>
@@ -229,7 +229,7 @@ export default function HomePage() {
       <footer className="border-t border-white/10 px-6 py-16">
         <div className="mx-auto max-w-6xl">
           <div className="font-[family-name:var(--font-display)] text-5xl font-bold tracking-[0.2em] text-white/90 sm:text-7xl">
-            ELIOS
+            Ternline
           </div>
           <div className="mt-8 grid gap-8 text-sm text-white/55 sm:grid-cols-3">
             <div>
@@ -252,12 +252,12 @@ export default function HomePage() {
             </div>
             <div>
               <div className="mb-2 font-medium text-white/80">Demo</div>
-              <p>ops@elios.demo / client@elios.demo</p>
+              <p>ops@ternline.demo / client@ternline.demo</p>
               <p>password: demo1234</p>
             </div>
           </div>
           <p className="mt-10 text-xs text-white/35">
-            Portfolio project — not a commercial carrier. © {new Date().getFullYear()} ELIOS Demo.
+            Portfolio project — not a commercial carrier. © {new Date().getFullYear()} Ternline Demo.
           </p>
         </div>
       </footer>

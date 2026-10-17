@@ -43,7 +43,7 @@ export default function TrackPage() {
     <main className="min-h-screen bg-[var(--ink)] px-6 py-16 text-white">
       <div className="mx-auto max-w-2xl">
         <Link href="/" className="font-[family-name:var(--font-display)] text-sm font-bold tracking-[0.18em]">
-          ELIOS
+          Ternline
         </Link>
         <h1 className="mt-6 text-3xl font-semibold">Shipment tracking</h1>
         {error ? <p className="mt-6 text-red-300">{error}</p> : null}

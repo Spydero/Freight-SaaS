@@ -12,7 +12,7 @@ export default function ContactPage() {
             <p className="mt-4 text-white/65">
               Submit a shipment interest form. Ops demo users will see it in the lead inbox.
             </p>
-            <p className="mt-6 text-sm text-white/45">hello@elios.demo · +1 (555) 014-2000</p>
+            <p className="mt-6 text-sm text-white/45">hello@ternline.demo · +1 (555) 014-2000</p>
           </div>
           <div className="rounded-2xl border border-white/10 bg-[var(--panel)] p-6">
             <LeadForm />

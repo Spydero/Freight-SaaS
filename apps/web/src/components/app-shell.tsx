@@ -54,7 +54,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <aside className="border-b border-white/10 bg-[var(--panel)] lg:border-b-0 lg:border-r">
         <div className="flex items-center justify-between px-5 py-5">
           <Link href="/" className="font-[family-name:var(--font-display)] text-sm font-bold tracking-[0.18em]">
-            ELIOS
+            Ternline
           </Link>
           <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] uppercase tracking-wide text-white/60">
             {user.role}

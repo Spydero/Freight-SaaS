@@ -3,7 +3,7 @@ import type { Role } from "@elios/shared";
 import { env } from "./env.js";
 
 const secret = new TextEncoder().encode(env.SESSION_SECRET);
-export const SESSION_COOKIE = "elios_session";
+export const SESSION_COOKIE = "ternline_session";
 
 export type SessionPayload = {
   userId: string;

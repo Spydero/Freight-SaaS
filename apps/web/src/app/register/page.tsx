@@ -36,7 +36,7 @@ export default function RegisterPage() {
     <main className="flex min-h-screen items-center justify-center bg-[var(--ink)] px-6">
       <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[var(--panel)] p-8">
         <Link href="/" className="font-[family-name:var(--font-display)] text-lg font-bold tracking-[0.18em]">
-          ELIOS
+          Ternline
         </Link>
         <h1 className="mt-6 text-2xl font-semibold">Create account</h1>
         <p className="mt-2 text-sm text-white/55">Creates a client organization for your company.</p>

@@ -10,7 +10,7 @@ export default function AboutPage() {
         <div className="mx-auto max-w-3xl px-6 pb-24 pt-32">
           <h1 className="font-[family-name:var(--font-display)] text-4xl font-semibold">Our story</h1>
           <p className="mt-6 text-lg leading-relaxed text-white/70">
-            ELIOS is a portfolio shipping management SaaS. It demonstrates a complete quote-to-delivery
+            Ternline is a portfolio shipping management SaaS. It demonstrates a complete quote-to-delivery
             workflow with roles, kanban ops boards, document trails, analytics, and public tracking —
             without depending on live carrier APIs.
           </p>

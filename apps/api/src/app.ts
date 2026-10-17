@@ -31,7 +31,7 @@ export function createApp() {
   app.use(morgan(env.NODE_ENV === "production" ? "combined" : "dev"));
   app.use(optionalAuth);
 
-  app.get("/health", (_req, res) => res.json({ ok: true, service: "elios-api" }));
+  app.get("/health", (_req, res) => res.json({ ok: true, service: "ternline-api" }));
 
   app.use("/v1/auth", authRouter);
   app.use("/v1/leads", leadsRouter);

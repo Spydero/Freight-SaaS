@@ -1,4 +1,4 @@
-# ELIOS — Shipping Management SaaS (Portfolio)
+# Ternline — Shipping Management SaaS (Portfolio)
 
 Polished logistics console + marketing site. Quote → shipment → milestone tracking, with ops kanban, analytics, and public track links.
 
@@ -15,9 +15,9 @@ Polished logistics console + marketing site. Quote → shipment → milestone tr
 
 | Email | Password | Role |
 |-------|----------|------|
-| `ops@elios.demo` | `demo1234` | Ops |
-| `client@elios.demo` | `demo1234` | Client |
-| `admin@elios.demo` | `demo1234` | Admin |
+| `ops@ternline.demo` | `demo1234` | Ops |
+| `client@ternline.demo` | `demo1234` | Client |
+| `admin@ternline.demo` | `demo1234` | Admin |
 
 ## Quick start
 
@@ -44,7 +44,7 @@ docker compose up -d
 
 ## What works today
 
-- Marketing site (ELIOS dark + gold)
+- Marketing site (Ternline dark + gold)
 - Register / login / roles
 - Lead form → Ops inbox → create quote
 - Client accept/reject quote → shipment
@@ -56,8 +56,8 @@ docker compose up -d
 ## Walkthrough
 
 1. Open `/` — browse marketing, submit a lead  
-2. Login as `ops@elios.demo` — convert lead to quote  
-3. Login as `client@elios.demo` — accept quote  
+2. Login as `ops@ternline.demo` — convert lead to quote  
+3. Login as `client@ternline.demo` — accept quote  
 4. As Ops — open shipment, add milestone, generate tracking link  
 5. Open `/track/...` in a private window  
 
@@ -71,4 +71,27 @@ packages/shared   Zod schemas / shared types
 
 ## Spec
 
-See [`ELIOS-PORTFOLIO-SPEC.md`](./ELIOS-PORTFOLIO-SPEC.md) for PRD, scope, and roadmap.
+See [`TERNLINE-PORTFOLIO-SPEC.md`](./TERNLINE-PORTFOLIO-SPEC.md) for PRD, scope, and roadmap.
+
+## How roles work (important)
+
+| Role | Who | What they do |
+|------|-----|----------------|
+| **OPS / ADMIN** | Ternline logistics staff (your company) | See leads, create quotes, update shipments, kanban |
+| **CLIENT** | Customer company user (e.g. Acme Trading) | Accept/reject quotes, view own shipments, comment |
+
+**Customer vs company:**  
+- A **customer** is a person (`User`) with role `CLIENT`.  
+- A **company** is an `Organization` (e.g. Acme Trading Co.).  
+- Clients belong to a customer org. Ops belonging to Ternline/Globex can work across client orgs.  
+Creating a quote (Ops) and accepting a quote (Client) are **different roles** — switch accounts to test both sides.
+
+## How to create & test shipments
+
+1. Open http://localhost:3000 — submit **Plan your next shipment** (or `/contact`).
+2. Log in as **ops@ternline.demo** / `demo1234` → **Leads** → select lead → **Send quote** (pick Acme Trading).
+3. Log out → log in as **client@ternline.demo** / `demo1234` → **Quotes** → **Accept**.
+4. That creates a **Shipment**. Open it under **Shipments** or **Kanban**.
+5. As Ops again: add milestones, generate public `/track/...` link.
+
+**Already seeded:** log in as client or ops and open **Shipments** — `TRN-2026-00001` (in transit) and `TRN-2026-00002` (booked) are ready.

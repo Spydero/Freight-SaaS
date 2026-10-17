@@ -241,7 +241,7 @@ quotesRouter.get("/:id/pdf-data", requireAuth, async (req, res, next) => {
     }
     res.json({
       pdf: {
-        title: `ELIOS Quote ${quote.id.slice(-6).toUpperCase()}`,
+        title: `Ternline Quote ${quote.id.slice(-6).toUpperCase()}`,
         organization: quote.organization.name,
         currency: quote.currency,
         total: Number(quote.total),

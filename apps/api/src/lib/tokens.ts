@@ -15,5 +15,5 @@ export function hashToken(raw: string) {
 
 export function makeReferenceCode(seq: number) {
   const year = new Date().getFullYear();
-  return `ELI-${year}-${String(seq).padStart(5, "0")}`;
+  return `TRN-${year}-${String(seq).padStart(5, "0")}`;
 }

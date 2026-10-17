@@ -11,7 +11,7 @@ export function SiteHeader() {
     <header className="absolute inset-x-0 top-0 z-20">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
         <Link href="/" className="font-[family-name:var(--font-display)] text-xl font-bold tracking-[0.18em]">
-          ELIOS
+          Ternline
         </Link>
         <nav className="hidden items-center gap-8 text-sm text-white/70 md:flex">
           <Link href="/#services" className="hover:text-white">
