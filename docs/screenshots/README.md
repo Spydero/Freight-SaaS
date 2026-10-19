@@ -4,6 +4,7 @@ Captured from the local demo (`ops@ternline.demo` and `client@ternline.demo`).
 
 | File | What it shows |
 |------|----------------|
+| `ternline-cover.jpg` | README cover for the repo |
 | `ternline-ops-dashboard.png` | Ops dashboard with open leads and recent shipments |
 | `ternline-shipments-list.png` | Shipments list after client acceptance |
 | `ternline-shipment-status-updated.png` | Ops status control after saving **In transit** |

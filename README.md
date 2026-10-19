@@ -1,5 +1,7 @@
 # Ternline — Shipping Management SaaS (Portfolio)
 
+![Ternline — quote to delivery, in one console](docs/screenshots/ternline-cover.jpg)
+
 Polished logistics console + marketing site. Quote → shipment → milestone tracking, with ops kanban, analytics, and public track links.
 
 > Portfolio demo — not a real carrier. Carrier GPS/email/payments are mocked.
