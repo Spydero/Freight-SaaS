@@ -1,10 +1,10 @@
-# Ternline — Shipping Management SaaS (Portfolio)
+# Ternline: Shipping Management SaaS (Portfolio)
 
-![Ternline — quote to delivery, in one console](docs/screenshots/ternline-cover.jpg)
+![Ternline: quote to delivery, in one console](docs/screenshots/ternline-cover.jpg)
 
 Polished logistics console + marketing site. Quote → shipment → milestone tracking, with ops kanban, analytics, and public track links.
 
-> Portfolio demo — not a real carrier. Carrier GPS/email/payments are mocked.
+> Portfolio demo: not a real carrier. Carrier GPS/email/payments are mocked.
 
 ## Stack
 
@@ -57,10 +57,10 @@ docker compose up -d
 
 ## Walkthrough
 
-1. Open `/` — browse marketing, submit a lead  
-2. Login as `ops@ternline.demo` — convert lead to quote  
-3. Login as `client@ternline.demo` — accept quote  
-4. As Ops — open shipment, add milestone, generate tracking link  
+1. Open `/`: browse marketing, submit a lead  
+2. Login as `ops@ternline.demo`: convert lead to quote  
+3. Login as `client@ternline.demo`: accept quote  
+4. As Ops: open shipment, add milestone, generate tracking link  
 5. Open `/track/...` in a private window  
 
 ## Repo layout
@@ -92,16 +92,16 @@ See [`TERNLINE-PORTFOLIO-SPEC.md`](./TERNLINE-PORTFOLIO-SPEC.md) for PRD, scope,
 **Customer vs company:**  
 - A **client user** (acceptor) is a person with role `CLIENT`.  
 - A **company** is an `Organization` (e.g. Acme Trading Co.).  
-Creating a quote (Ops) and accepting a quote (Client) are **different roles** — switch accounts to test both sides.
+Creating a quote (Ops) and accepting a quote (Client) are **different roles**: switch accounts to test both sides.
 
 ## How to create & test shipments
 
 Shipments are **not** assigned by Ops. They are created only when an **approved client accepts a quotation**.
 
-1. Open http://localhost:3000 — submit **Plan your next shipment** (or `/contact`).
+1. Open http://localhost:3000: submit **Plan your next shipment** (or `/contact`).
 2. Log in as **ops@ternline.demo** / `demo1234` → **Leads** → select lead → **Send quote** (pick Acme Trading).
 3. Log out → log in as **client@ternline.demo** / `demo1234` → **Quotes** → **Accept** (company must be approved).
 4. That creates the **Shipment**. Open it under **Shipments** or **Kanban**.
 5. As Ops again: add milestones, generate public `/track/...` link.
 
-**Already seeded:** log in as client or ops and open **Shipments** — sample bookings exist for browsing.
+**Already seeded:** log in as client or ops and open **Shipments**: sample bookings exist for browsing.
